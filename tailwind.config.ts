@@ -21,6 +21,8 @@ const config: Config = {
           raised: "var(--surface-raised)",
           overlay: "var(--surface-overlay)",
           sunken: "var(--surface-sunken)",
+          "tint-blue": "var(--section-tint-blue)",
+          "tint-yellow": "var(--section-tint-yellow)",
         },
         border: {
           subtle: "var(--border-subtle)",
@@ -36,8 +38,15 @@ const config: Config = {
         brand: {
           DEFAULT: "var(--brand-accent)",
           hover: "var(--brand-accent-hover)",
+          dark: "var(--brand-accent-dark)",
           muted: "var(--brand-accent-muted)",
           contrast: "var(--brand-accent-contrast)",
+        },
+        accent: {
+          DEFAULT: "var(--accent-secondary)",
+          hover: "var(--accent-secondary-hover)",
+          muted: "var(--accent-secondary-muted)",
+          contrast: "var(--accent-secondary-contrast)",
         },
         status: {
           success: "var(--status-success)",
@@ -62,6 +71,7 @@ const config: Config = {
         "elevation-2": "var(--shadow-elevation-2)",
         "elevation-3": "var(--shadow-elevation-3)",
         "glow-brand": "var(--shadow-glow-brand)",
+        "glow-accent": "var(--shadow-glow-accent)",
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",

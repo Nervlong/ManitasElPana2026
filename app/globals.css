@@ -4,39 +4,50 @@
 
 /* =============================================================================
    DESIGN TOKENS — MANITAS EL PANA
-   Paleta oscura premium, estética clínica Linear/Vercel.
+   Paleta clara, fiel a la identidad de marca: azul + blanco + amarillo.
    Ningún componente debe usar valores hardcodeados: todo pasa por aquí.
    ============================================================================= */
 
 :root {
-  /* ---- Superficies (Dark Mode nativo, capas por elevación) ---- */
-  --surface-bg: #08090b; /* fondo raíz de la app */
-  --surface-sunken: #050506; /* pozos, inputs, tracks */
-  --surface-raised: #101114; /* cards, paneles */
-  --surface-overlay: #17181c; /* modales, slide-overs, popovers */
+  /* ---- Superficies (Light Mode, capas por elevación) ---- */
+  --surface-bg: #f7f9fc; /* fondo raíz de la app */
+  --surface-sunken: #eef1f6; /* pozos, inputs, tracks */
+  --surface-raised: #ffffff; /* cards, paneles */
+  --surface-overlay: #ffffff; /* modales, slide-overs, popovers */
 
-  /* ---- Bordes (opacidad sobre blanco, nunca grises planos) ---- */
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-default: rgba(255, 255, 255, 0.1);
-  --border-strong: rgba(255, 255, 255, 0.16);
+  /* ---- Bordes (opacidad sobre negro, nunca grises planos) ---- */
+  --border-subtle: rgba(15, 23, 42, 0.06);
+  --border-default: rgba(15, 23, 42, 0.12);
+  --border-strong: rgba(15, 23, 42, 0.2);
 
   /* ---- Tipografía / Contenido ---- */
-  --text-primary: #f3f4f6;
-  --text-secondary: #9ca0a8;
-  --text-tertiary: #6b6f78;
-  --text-disabled: #43454b;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #7c8898;
+  --text-disabled: #b0b8c4;
 
-  /* ---- Marca: ámbar "manitas" — cálido, táctil, industrial-premium ---- */
-  --brand-accent: #f5a524;
-  --brand-accent-hover: #ffb545;
-  --brand-accent-muted: rgba(245, 165, 36, 0.14);
-  --brand-accent-contrast: #0a0a0b;
+  /* ---- Marca: azul marino "manitas" — confianza/profesionalidad, del uniforme y el logo ---- */
+  --brand-accent: #1e3a8a;
+  --brand-accent-hover: #172d6b;
+  --brand-accent-dark: #0f1f4d;
+  --brand-accent-muted: rgba(30, 58, 138, 0.1);
+  --brand-accent-contrast: #ffffff;
+
+  /* ---- Acento secundario: naranja/amarillo "el Pana" — acción/energía, del casco/logo ---- */
+  --accent-secondary: #f59e0b;
+  --accent-secondary-hover: #d97706;
+  --accent-secondary-muted: rgba(245, 158, 11, 0.14);
+  --accent-secondary-contrast: #0f172a;
+
+  /* ---- Tints de sección: franjas alternadas para romper el blanco plano ---- */
+  --section-tint-blue: #eceffb;
+  --section-tint-yellow: #fef6e7;
 
   /* ---- Estados semánticos ---- */
-  --status-success: #3ddc97;
-  --status-warning: #f5c518;
-  --status-danger: #f5544d;
-  --status-info: #4d9cf5;
+  --status-success: #16a34a;
+  --status-warning: #f59e0b;
+  --status-danger: #dc2626;
+  --status-info: #1e3a8a;
 
   /* ---- Radios ---- */
   --radius-sm: 6px;
@@ -50,12 +61,16 @@
   --font-mono: "Geist Mono", ui-monospace, "SF Mono", monospace;
 
   /* ---- Sombras multicapa (nunca shadow-md plano) ---- */
-  --shadow-elevation-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04);
-  --shadow-elevation-2: 0 4px 12px rgba(0, 0, 0, 0.45), 0 2px 4px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(255, 255, 255, 0.05);
-  --shadow-elevation-3: 0 16px 40px rgba(0, 0, 0, 0.55), 0 6px 16px rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(255, 255, 255, 0.06);
-  --shadow-glow-brand: 0 0 0 1px rgba(245, 165, 36, 0.4), 0 8px 24px rgba(245, 165, 36, 0.18);
+  --shadow-elevation-1: 0 1px 2px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(15, 23, 42, 0.04);
+  --shadow-elevation-2: 0 4px 12px rgba(15, 23, 42, 0.08), 0 2px 4px rgba(15, 23, 42, 0.06),
+    0 0 0 1px rgba(15, 23, 42, 0.05);
+  --shadow-elevation-3: 0 16px 40px rgba(15, 23, 42, 0.12), 0 6px 16px rgba(15, 23, 42, 0.08),
+    0 0 0 1px rgba(15, 23, 42, 0.06);
+  --shadow-glow-brand: 0 0 0 1px rgba(30, 58, 138, 0.3), 0 8px 24px rgba(30, 58, 138, 0.16);
+  --shadow-glow-accent: 0 0 0 1px rgba(245, 158, 11, 0.35), 0 8px 24px rgba(245, 158, 11, 0.18);
+  /* Sombra contenida para cards interactivas (paneles/dashboards) — más
+     sutil que elevation-2, evita el look "flotante" genérico. */
+  --shadow-premium: 0 4px 20px -2px rgba(30, 58, 138, 0.06), 0 0 0 1px rgba(15, 23, 42, 0.04);
 }
 
 /* =============================================================================
@@ -67,7 +82,7 @@
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
