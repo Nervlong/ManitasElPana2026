@@ -57,7 +57,7 @@ export default async function ManitaProfilePage({ params }: ManitaProfilePagePro
     .from("profiles")
     .select("id, full_name, avatar_url, specialty, bio, coverage_zone, is_verified, created_at")
     .eq("id", id)
-    .eq("role", "manita")
+    .or("role.eq.manita,and(role.eq.admin,is_active_manita.eq.true)")
     .maybeSingle();
 
   if (!manita) {

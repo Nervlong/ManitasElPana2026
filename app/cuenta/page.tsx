@@ -31,8 +31,6 @@ import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/app/auth/actions";
 import { AppHeader } from "@/components/app-header";
 import { BecomeManitaForm } from "@/components/become-manita-form";
-import { ProfileForm } from "@/components/auth/profile-form";
-import { ChangePasswordForm } from "@/components/auth/change-password-form";
 
 const roleLabels: Record<string, string> = {
   cliente: "Cliente",
@@ -119,10 +117,7 @@ function AccountCard({ icon, title, description, href, badge, comingSoon }: Acco
 
 interface CuentaPageProps {
   searchParams: Promise<{
-    actualizado?: string;
-    password_actualizada?: string;
     solicitud_enviada?: string;
-    avatar_actualizado?: string;
     error?: string;
   }>;
 }
@@ -133,20 +128,10 @@ const cuentaErrors: Record<string, string> = {
   solicitud_fallida: "No pudimos enviar la solicitud. Prueba de nuevo.",
   ya_no_eres_cliente:
     "Ya no eres cliente, así que no puedes volver a solicitar pasar a manita.",
-  sin_archivo: "Elige una imagen antes de subir.",
-  avatar_muy_grande: "La imagen no puede pesar más de 2 MB.",
-  avatar_no_subido: "No pudimos subir la imagen. Prueba de nuevo.",
-  avatar_no_guardado: "La imagen se subió pero no pudimos guardarla en tu perfil.",
 };
 
 export default async function CuentaPage({ searchParams }: CuentaPageProps) {
-  const {
-    actualizado,
-    password_actualizada: passwordActualizada,
-    solicitud_enviada: solicitudEnviada,
-    avatar_actualizado: avatarActualizado,
-    error,
-  } = await searchParams;
+  const { solicitud_enviada: solicitudEnviada, error } = await searchParams;
   const cuentaError = error ? cuentaErrors[error] : undefined;
 
   const supabase = await createClient();
@@ -161,7 +146,7 @@ export default async function CuentaPage({ searchParams }: CuentaPageProps) {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "role, full_name, avatar_url, is_verified, created_at, specialty, bio, coverage_zone"
+      "role, full_name, avatar_url, is_verified, created_at, specialty, bio, coverage_zone, is_active_manita"
     )
     .eq("id", user.id)
     .single();
@@ -171,7 +156,9 @@ export default async function CuentaPage({ searchParams }: CuentaPageProps) {
   const isCliente = role === "cliente";
   const isManita = role === "manita";
   const isAdmin = role === "admin";
-  const canChangePassword = user.app_metadata?.provider === "email";
+  // Tiene perfil público si es manita real, o admin que se activó como
+  // tal (ver 0014_admin_active_manita.sql).
+  const hasPublicProfile = isManita || (isAdmin && !!profile?.is_active_manita);
   const initial = fullName.charAt(0).toUpperCase();
 
   const activeJobsColumn = isManita ? "pro_id" : "client_id";
@@ -228,16 +215,10 @@ export default async function CuentaPage({ searchParams }: CuentaPageProps) {
           </p>
         </div>
 
-        {(actualizado || passwordActualizada || solicitudEnviada || avatarActualizado) && (
+        {solicitudEnviada && (
           <div className="flex items-center gap-2 rounded-xl border border-status-success/20 bg-status-success/10 px-4 py-3 text-sm font-medium text-status-success">
             <CheckCircle2 className="h-4 w-4 shrink-0" />
-            {actualizado
-              ? "Perfil actualizado correctamente."
-              : passwordActualizada
-                ? "Contraseña actualizada correctamente."
-                : avatarActualizado
-                  ? "Foto de perfil actualizada."
-                  : "Solicitud enviada. Un admin la va a revisar pronto."}
+            Solicitud enviada. Un admin la va a revisar pronto.
           </div>
         )}
 
@@ -264,13 +245,13 @@ export default async function CuentaPage({ searchParams }: CuentaPageProps) {
           />
 
           <AccountCard
-            href="#seguridad"
+            href="/seguridad"
             icon={<UserCircle2 className="h-5 w-5" />}
             title="Inicio de sesión y seguridad"
             description={`Editar el nombre${isManita ? ", la especialidad" : ""} y la contraseña.`}
           />
 
-          {isManita && (
+          {hasPublicProfile && (
             <>
               <AccountCard
                 href={`/manitas/${user.id}`}
@@ -362,42 +343,6 @@ export default async function CuentaPage({ searchParams }: CuentaPageProps) {
             )}
           </div>
         )}
-
-        {/* ---- Inicio de sesión y seguridad (formularios reales) ---- */}
-        <div id="seguridad" className="scroll-mt-6 space-y-4">
-          <h2 className="text-lg font-bold text-brand-dark">
-            Inicio de sesión y seguridad
-          </h2>
-
-          <div
-            className="rounded-2xl border border-border-default bg-surface-raised p-6 sm:p-8"
-            style={{ boxShadow: "var(--shadow-elevation-1)" }}
-          >
-            <h3 className="mb-4 text-sm font-bold uppercase tracking-widest text-content-tertiary">
-              Datos del perfil
-            </h3>
-            <ProfileForm
-              fullName={profile?.full_name ?? fullName}
-              avatarUrl={profile?.avatar_url ?? null}
-              showManitaFields={isManita || isAdmin}
-              specialty={profile?.specialty ?? ""}
-              bio={profile?.bio ?? ""}
-              coverageZone={profile?.coverage_zone ?? ""}
-            />
-          </div>
-
-          {canChangePassword && (
-            <div
-              className="rounded-2xl border border-border-default bg-surface-raised p-6 sm:p-8"
-              style={{ boxShadow: "var(--shadow-elevation-1)" }}
-            >
-              <h3 className="mb-4 text-sm font-bold uppercase tracking-widest text-content-tertiary">
-                Contraseña
-              </h3>
-              <ChangePasswordForm />
-            </div>
-          )}
-        </div>
 
         <form action={signOut}>
           <button

@@ -184,7 +184,7 @@ export async function updateProfile(
     return { error: "No se pudo guardar. Inténtalo de nuevo." };
   }
 
-  redirect("/cuenta?actualizado=1");
+  redirect("/seguridad?actualizado=1");
 }
 
 export async function updateAvatar(formData: FormData) {
@@ -199,13 +199,13 @@ export async function updateAvatar(formData: FormData) {
 
   const file = formData.get("avatar") as File | null;
   if (!file || file.size === 0) {
-    redirect("/cuenta?error=sin_archivo");
+    redirect("/seguridad?error=sin_archivo");
   }
 
   // 2MB / mimetypes ya los exige el bucket (0013_avatar_storage.sql),
   // pero se re-valida acá para dar un mensaje claro antes de subir.
   if (file!.size > 2 * 1024 * 1024) {
-    redirect("/cuenta?error=avatar_muy_grande");
+    redirect("/seguridad?error=avatar_muy_grande");
   }
 
   const ext = file!.name.split(".").pop() || "jpg";
@@ -218,7 +218,7 @@ export async function updateAvatar(formData: FormData) {
     .upload(path, file!, { upsert: true });
 
   if (uploadError) {
-    redirect("/cuenta?error=avatar_no_subido");
+    redirect("/seguridad?error=avatar_no_subido");
   }
 
   const {
@@ -236,10 +236,10 @@ export async function updateAvatar(formData: FormData) {
     .eq("id", user!.id);
 
   if (updateError) {
-    redirect("/cuenta?error=avatar_no_guardado");
+    redirect("/seguridad?error=avatar_no_guardado");
   }
 
-  redirect("/cuenta?avatar_actualizado=1");
+  redirect("/seguridad?avatar_actualizado=1");
 }
 
 export async function changePassword(
@@ -263,7 +263,7 @@ export async function changePassword(
     return { error: error.message };
   }
 
-  redirect("/cuenta?password_actualizada=1");
+  redirect("/seguridad?password_actualizada=1");
 }
 
 export async function signInWithGoogle() {

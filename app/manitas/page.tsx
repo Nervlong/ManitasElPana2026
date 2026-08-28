@@ -52,10 +52,13 @@ export default async function ManitasPage() {
     initial = nameForInitial.charAt(0).toUpperCase();
   }
 
+  // Manitas reales + admins que se activaron como manita (RLS ya limita
+  // esto a lo público, ver 0014_admin_active_manita.sql) — se filtra acá
+  // también para claridad, aunque RLS es la garantía real.
   const { data: manitas } = await supabase
     .from("profiles")
-    .select("id, full_name, avatar_url, specialty, bio, coverage_zone, is_verified")
-    .eq("role", "manita")
+    .select("id, full_name, avatar_url, specialty, bio, coverage_zone, is_verified, role")
+    .or("role.eq.manita,and(role.eq.admin,is_active_manita.eq.true)")
     .order("is_verified", { ascending: false })
     .order("full_name", { ascending: true });
 

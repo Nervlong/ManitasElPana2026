@@ -11,10 +11,12 @@
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { AppHeader } from "@/components/app-header";
 import { ClientPanel } from "@/components/panel/client-panel";
 import { ProPanel } from "@/components/panel/pro-panel";
+import { setActiveManita } from "@/app/panel/actions";
 
 interface PanelPageProps {
   searchParams: Promise<{ vista?: string }>;
@@ -34,7 +36,7 @@ export default async function PanelPage({ searchParams }: PanelPageProps) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, full_name, avatar_url")
+    .select("role, full_name, avatar_url, is_active_manita")
     .eq("id", user.id)
     .single();
 
@@ -59,7 +61,7 @@ export default async function PanelPage({ searchParams }: PanelPageProps) {
 
       <div className="px-6 pb-24 pt-6">
         {isAdmin && (
-          <div className="mx-auto mb-6 flex max-w-4xl gap-2">
+          <div className="mx-auto mb-6 flex max-w-4xl flex-wrap items-center gap-2">
             <Link
               href="/panel"
               className={
@@ -82,6 +84,33 @@ export default async function PanelPage({ searchParams }: PanelPageProps) {
             >
               Vista manita
             </Link>
+
+            {showProView && (
+              <form action={setActiveManita} className="ml-auto">
+                <input
+                  type="hidden"
+                  name="active"
+                  value={(!profile?.is_active_manita).toString()}
+                />
+                <button
+                  type="submit"
+                  className={
+                    "flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors " +
+                    (profile?.is_active_manita
+                      ? "border-status-success/30 bg-status-success/10 text-status-success hover:bg-status-success/20"
+                      : "border-border-default bg-surface-raised text-content-secondary hover:text-content-primary")
+                  }
+                  title={
+                    profile?.is_active_manita
+                      ? "Visible en Nuestros manitas — click para ocultar"
+                      : "No aparecés en Nuestros manitas — click para activarte"
+                  }
+                >
+                  {profile?.is_active_manita ? <Eye size={16} /> : <EyeOff size={16} />}
+                  {profile?.is_active_manita ? "Visible en Nuestros manitas" : "Activarme como manita"}
+                </button>
+              </form>
+            )}
           </div>
         )}
 

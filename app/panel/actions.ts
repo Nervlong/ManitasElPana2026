@@ -62,3 +62,21 @@ export async function advanceJobStatus(formData: FormData) {
 
   revalidatePath("/panel");
 }
+
+export async function setActiveManita(formData: FormData) {
+  const active = formData.get("active") === "true";
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  // admin_set_active_manita() valida internamente que quien llama sea
+  // admin — si no lo es, el RPC lanza una excepción y esto no hace nada
+  // (ver 0014_admin_active_manita.sql).
+  await supabase.rpc("admin_set_active_manita", { active });
+
+  revalidatePath("/panel");
+  revalidatePath("/manitas");
+}
