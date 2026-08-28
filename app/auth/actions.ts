@@ -117,6 +117,12 @@ export async function becomeManita(formData: FormData) {
   });
 
   if (error) {
+    // "Solo un cliente puede..." (0009_become_manita_explicit_errors.sql)
+    // pasa un caso concreto en vez del genérico "solicitud_fallida" —
+    // evita el bug anterior donde esto fallaba en silencio sin avisar.
+    if (error.message.includes("Solo un cliente puede")) {
+      redirect("/cuenta?error=ya_no_eres_cliente");
+    }
     redirect("/cuenta?error=solicitud_fallida");
   }
 

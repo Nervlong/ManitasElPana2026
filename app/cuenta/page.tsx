@@ -120,6 +120,8 @@ const becomeManitaErrors: Record<string, string> = {
   debes_aceptar_terminos_autonomo:
     "Tienes que marcar la casilla de aceptación para enviar la solicitud.",
   solicitud_fallida: "No pudimos enviar la solicitud. Prueba de nuevo.",
+  ya_no_eres_cliente:
+    "Ya no eres cliente, así que no puedes volver a solicitar pasar a manita.",
 };
 
 export default async function CuentaPage({ searchParams }: CuentaPageProps) {
