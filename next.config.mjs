@@ -6,6 +6,12 @@ const nextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
+      {
+        // Foto de perfil de cuentas de Google (avatar_url tras login con
+        // Google, ver signInWithGoogle en app/auth/actions.ts).
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+      },
     ],
   },
 };
