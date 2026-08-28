@@ -119,17 +119,14 @@ export default async function HomePage() {
           />
         </Link>
         <nav className="hidden items-center gap-8 text-base font-medium text-content-primary sm:flex">
-          <a href="#servicios" className="transition-colors hover:text-brand">
+          <Link href="/servicios" className="transition-colors hover:text-brand">
             Servicios
-          </a>
-          <a href="#como-funciona" className="transition-colors hover:text-brand">
+          </Link>
+          <Link href="/como-funciona" className="transition-colors hover:text-brand">
             Cómo funciona
-          </a>
+          </Link>
           <Link href="/manitas" className="transition-colors hover:text-brand">
             Nuestros manitas
-          </Link>
-          <Link href="/registro" className="transition-colors hover:text-brand">
-            Únete como profesional
           </Link>
         </nav>
         {user ? (
@@ -392,6 +389,52 @@ export default async function HomePage() {
                 </span>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ---- Únete como profesional: sección propia para captar manitas,
+           antes vivía como link suelto en el nav (llevaba a /registro
+           sin ningún contexto). ---- */}
+      <section className="relative z-10 overflow-hidden bg-brand-dark px-6 py-24">
+        <div className="pointer-events-none absolute -left-[10%] top-[-20%] h-[320px] w-[320px] rounded-full bg-accent/15 blur-[120px]" />
+        <div className="relative mx-auto flex max-w-6xl flex-col items-center gap-12 lg:flex-row">
+          <div className="relative h-64 w-full max-w-md shrink-0 overflow-hidden rounded-2xl lg:h-80">
+            <Image
+              src="/trabajosRealizados/profesional-en-obra.png"
+              alt="Profesional de Manitas El Pana en obra"
+              fill
+              sizes="(max-width: 1024px) 100vw, 400px"
+              className="object-cover"
+            />
+          </div>
+
+          <div className="text-center lg:text-left">
+            <p className="text-xs font-semibold uppercase tracking-widest text-accent">
+              Para profesionales
+            </p>
+            <h2 className="mt-2 text-balance text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+              ¿Eres manita? Únete a la red
+            </h2>
+            <p className="mx-auto mt-4 max-w-lg text-balance text-sm leading-relaxed text-white/70 sm:text-base lg:mx-0">
+              Trabaja como profesional autónomo independiente, recibe
+              trabajos cualificados en tu zona y cobra directo del cliente,
+              sin intermediarios en el pago.
+            </p>
+            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
+              <Link
+                href="/registro"
+                className="inline-flex items-center justify-center rounded-md bg-accent px-6 py-3 text-sm font-semibold text-accent-contrast transition-colors hover:bg-accent-hover"
+              >
+                Únete como profesional
+              </Link>
+              <Link
+                href="/como-funciona"
+                className="text-sm font-semibold text-white/80 transition-colors hover:text-white"
+              >
+                Ver cómo funciona para manitas →
+              </Link>
+            </div>
           </div>
         </div>
       </section>

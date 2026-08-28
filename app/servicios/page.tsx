@@ -62,9 +62,6 @@ export default async function ServiciosPage() {
           <Link href="/manitas" className="transition-colors hover:text-brand">
             Nuestros manitas
           </Link>
-          <Link href="/registro" className="transition-colors hover:text-brand">
-            Únete como profesional
-          </Link>
         </nav>
         {user ? (
           <UserMenu
