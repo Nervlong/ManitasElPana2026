@@ -12,7 +12,16 @@
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, CheckCircle2, ShieldCheck, ShieldOff, Users, Wrench, XCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  MessageCircle,
+  ShieldCheck,
+  ShieldOff,
+  Users,
+  Wrench,
+  XCircle,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { reviewManitaRequest } from "@/app/auth/actions";
 import {
@@ -48,6 +57,15 @@ function formatDate(iso: string): string {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(iso));
+}
+
+// Convierte "+34 600 000 000" a "34600000000" para el link wa.me — solo
+// dígitos, sin +, espacios ni guiones (formato que exige la API de
+// WhatsApp Click to Chat). Solo el admin ve estos links: coordina la
+// visita con cliente y manita, ninguno de los dos ve el número del otro
+// directamente en la app.
+function toWhatsAppLink(number: string): string {
+  return `https://wa.me/${number.replace(/\D/g, "")}`;
 }
 
 interface AdminPageProps {
@@ -103,7 +121,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       supabase
         .from("jobs")
         .select(
-          "id, service_type, status, price, scheduled_at, client:profiles!jobs_client_id_fkey(full_name), pro:profiles!jobs_pro_id_fkey(id, full_name)"
+          "id, service_type, status, price, scheduled_at, client:profiles!jobs_client_id_fkey(full_name, whatsapp_number), pro:profiles!jobs_pro_id_fkey(id, full_name, whatsapp_number)"
         )
         .order("created_at", { ascending: false })
         .limit(50),
@@ -124,8 +142,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     status: string;
     price: number;
     scheduled_at: string;
-    client: { full_name: string | null } | null;
-    pro: { id: string; full_name: string | null } | null;
+    client: { full_name: string | null; whatsapp_number: string | null } | null;
+    pro: { id: string; full_name: string | null; whatsapp_number: string | null } | null;
   }
   const jobs = ((allJobs ?? []) as unknown as JobRow[]).map((j) => j);
 
@@ -404,6 +422,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   <th className="px-4 py-3 font-semibold">Manita</th>
                   <th className="px-4 py-3 font-semibold">Estado</th>
                   <th className="px-4 py-3 font-semibold">Precio</th>
+                  <th className="px-4 py-3 font-semibold">Contacto</th>
                   <th className="px-4 py-3 font-semibold">Acciones</th>
                 </tr>
               </thead>
@@ -429,6 +448,35 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                           currency: "EUR",
                           maximumFractionDigits: 0,
                         }).format(Number(job.price))}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1.5">
+                          {job.client?.whatsapp_number && (
+                            <a
+                              href={toWhatsAppLink(job.client.whatsapp_number)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={`WhatsApp de ${job.client.full_name ?? "cliente"}`}
+                              className="flex h-7 w-7 items-center justify-center rounded-md border border-status-success/30 bg-status-success/10 text-status-success transition-colors hover:bg-status-success/20"
+                            >
+                              <MessageCircle className="h-3.5 w-3.5" />
+                            </a>
+                          )}
+                          {pro?.whatsapp_number && (
+                            <a
+                              href={toWhatsAppLink(pro.whatsapp_number)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={`WhatsApp de ${pro.full_name ?? "manita"}`}
+                              className="flex h-7 w-7 items-center justify-center rounded-md border border-brand/30 bg-brand-muted text-brand transition-colors hover:bg-brand/20"
+                            >
+                              <Wrench className="h-3.5 w-3.5" />
+                            </a>
+                          )}
+                          {!job.client?.whatsapp_number && !pro?.whatsapp_number && (
+                            <span className="text-content-tertiary">—</span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         {!isFinal && (
@@ -468,7 +516,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 })}
                 {!filteredJobs.length && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-6 text-center text-content-tertiary">
+                    <td colSpan={7} className="px-4 py-6 text-center text-content-tertiary">
                       {query ? "Sin resultados." : "Todavía no hay trabajos."}
                     </td>
                   </tr>

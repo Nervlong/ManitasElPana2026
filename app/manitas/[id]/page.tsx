@@ -14,7 +14,6 @@ import {
   Award,
   Clock3,
   MapPin,
-  MessageCircle,
   ShieldCheck,
   Star,
   Wrench,
@@ -35,13 +34,6 @@ function formatDate(iso: string): string {
     month: "long",
     year: "numeric",
   }).format(new Date(iso));
-}
-
-// Convierte "+34 600 000 000" a "34600000000" para el link wa.me — solo
-// dígitos, sin +, espacios ni guiones (formato que exige la API de
-// WhatsApp Click to Chat).
-function toWhatsAppLink(number: string): string {
-  return `https://wa.me/${number.replace(/\D/g, "")}`;
 }
 
 interface ManitaProfilePageProps {
@@ -78,7 +70,7 @@ export default async function ManitaProfilePage({ params }: ManitaProfilePagePro
   const { data: manita } = await supabase
     .from("profiles")
     .select(
-      "id, full_name, avatar_url, specialty, bio, coverage_zone, is_verified, created_at, whatsapp_number, years_experience, certifications, availability"
+      "id, full_name, avatar_url, specialty, bio, coverage_zone, is_verified, created_at, years_experience, certifications, availability"
     )
     .eq("id", id)
     .or("role.eq.manita,and(role.eq.admin,is_active_manita.eq.true)")
@@ -242,26 +234,15 @@ export default async function ManitaProfilePage({ params }: ManitaProfilePagePro
             </div>
           </div>
 
-          {/* ---- Contacto directo: WhatsApp + pedir presupuesto ---- */}
-          <div className="flex flex-col gap-2 border-t border-border-subtle pt-5 sm:flex-row">
-            {manita.whatsapp_number ? (
-              <a
-                href={toWhatsAppLink(manita.whatsapp_number)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-status-success px-5 py-3 text-sm font-semibold text-white transition-colors hover:opacity-90"
-              >
-                <MessageCircle className="h-4 w-4" />
-                Contactar por WhatsApp
-              </a>
-            ) : (
-              <p className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-border-default px-5 py-3 text-sm text-content-tertiary">
-                Todavía no cargó su WhatsApp
-              </p>
-            )}
+          {/* ---- CTA: pedir presupuesto. El contacto directo con el
+               manita (WhatsApp) es solo para el admin, que coordina el
+               trabajo desde /admin una vez que la solicitud entra al
+               sistema — así toda solicitud real queda registrada en
+               jobs, en vez de coordinarse por fuera de la plataforma. ---- */}
+          <div className="border-t border-border-subtle pt-5">
             <Link
               href="/presupuesto"
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-brand px-5 py-3 text-sm font-semibold text-brand transition-colors hover:bg-brand hover:text-white"
+              className="flex items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-hover"
             >
               Pedir presupuesto
             </Link>

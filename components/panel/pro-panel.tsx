@@ -3,8 +3,8 @@
 // tomar + agenda del día + métricas. Recibe los datos reales (jobs) ya
 // resueltos por app/panel/page.tsx. Server Component: tomar un trabajo y
 // avanzar su estado son Server Actions (app/panel/actions.ts).
-// "Contactar" abre WhatsApp directo (wa.me) cuando el cliente cargó su
-// número — no hay chat dentro de la app.
+// Sin contacto directo (WhatsApp) al cliente a propósito: coordina el
+// admin, así toda la comunicación real queda dentro del sistema.
 // -----------------------------------------------------------------------------
 
 import {
@@ -13,7 +13,6 @@ import {
   Clock,
   ListChecks,
   MapPin,
-  MessageCircle,
   Navigation,
   Star,
   Wallet,
@@ -35,17 +34,9 @@ function formatTime(iso: string): string {
   }).format(new Date(iso)) + "h";
 }
 
-// Convierte "+34 600 000 000" a "34600000000" para el link wa.me — solo
-// dígitos, sin +, espacios ni guiones (formato que exige la API de
-// WhatsApp Click to Chat).
-function toWhatsAppLink(number: string): string {
-  return `https://wa.me/${number.replace(/\D/g, "")}`;
-}
-
 interface AgendaJob {
   id: string;
   client_full_name: string | null;
-  client_whatsapp: string | null;
   service_type: string;
   address: string | null;
   scheduled_at: string;
@@ -272,17 +263,6 @@ export function ProPanel({
                       {formatEUR(job.price)}
                     </span>
                     <div className="flex items-center gap-2">
-                      {job.client_whatsapp && (
-                        <a
-                          href={toWhatsAppLink(job.client_whatsapp)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title="Contactar por WhatsApp"
-                          className="flex h-9 w-9 items-center justify-center rounded-xl border border-status-success/30 bg-status-success/10 text-status-success transition-colors hover:bg-status-success/20"
-                        >
-                          <MessageCircle className="h-4 w-4" />
-                        </a>
-                      )}
                       <form action={advanceJobStatus}>
                         <input type="hidden" name="jobId" value={job.id} />
                         <input type="hidden" name="currentStatus" value={job.status} />
