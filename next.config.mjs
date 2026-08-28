@@ -1,5 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Redirects 301 (permanentes) desde URLs del sitio legacy
+  // (manitaselpana.es, antes en Firebase Hosting) que Google tiene
+  // indexadas y ya no existen en este proyecto — sin esto, cualquiera
+  // que entre desde esos resultados de búsqueda cae en un 404 y se
+  // pierde la señal de SEO acumulada en esa URL.
+  async redirects() {
+    return [
+      {
+        source: "/contacto",
+        destination: "/presupuesto",
+        permanent: true,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {
