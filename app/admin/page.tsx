@@ -10,8 +10,9 @@
 // y reviewManitaRequest en app/auth/actions.ts).
 // -----------------------------------------------------------------------------
 
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CheckCircle2, ShieldCheck, ShieldOff, Users, Wrench, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ShieldCheck, ShieldOff, Users, Wrench, XCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { reviewManitaRequest } from "@/app/auth/actions";
 import {
@@ -147,7 +148,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       <div className="mx-auto max-w-5xl space-y-8 px-6 pb-24">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-brand-dark">
+            <Link
+              href="/cuenta"
+              className="flex items-center gap-1.5 text-sm font-medium text-content-secondary transition-colors hover:text-content-primary"
+            >
+              <ArrowLeft size={16} />
+              Volver a Mi cuenta
+            </Link>
+            <h1 className="mt-3 text-2xl font-bold tracking-tight text-brand-dark">
               Panel de administración
             </h1>
             <p className="mt-1 text-sm text-content-secondary">
