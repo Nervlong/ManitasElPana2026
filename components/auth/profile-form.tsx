@@ -41,6 +41,12 @@ function SubmitButton() {
   );
 }
 
+const availabilityOptions = [
+  { value: "inmediata", label: "Disponibilidad inmediata" },
+  { value: "esta_semana", label: "Disponible esta semana" },
+  { value: "a_coordinar", label: "A coordinar" },
+] as const;
+
 interface ProfileFormProps {
   fullName: string;
   avatarUrl: string | null;
@@ -49,6 +55,9 @@ interface ProfileFormProps {
   bio: string;
   coverageZone: string;
   whatsappNumber: string;
+  yearsExperience: number | null;
+  certifications: string;
+  availability: string;
 }
 
 export function ProfileForm({
@@ -59,6 +68,9 @@ export function ProfileForm({
   bio,
   coverageZone,
   whatsappNumber,
+  yearsExperience,
+  certifications,
+  availability,
 }: ProfileFormProps) {
   const [state, formAction] = useFormState(updateProfile, initialState);
   const initial = (fullName || "U").charAt(0).toUpperCase();
@@ -152,6 +164,63 @@ export function ProfileForm({
               <p className="mt-1 text-xs text-content-tertiary">
                 Así te contactan los clientes para coordinar los trabajos.
               </p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="pf-experiencia"
+                  className="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-tertiary"
+                >
+                  Años de experiencia
+                </label>
+                <input
+                  id="pf-experiencia"
+                  name="yearsExperience"
+                  type="number"
+                  min={0}
+                  max={80}
+                  placeholder="Ej. 5"
+                  defaultValue={yearsExperience ?? ""}
+                  className="w-full rounded-md border border-border-default bg-surface-sunken px-3 py-2.5 text-sm text-content-primary placeholder:text-content-tertiary focus:border-brand focus:outline-none"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="pf-disponibilidad"
+                  className="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-tertiary"
+                >
+                  Disponibilidad
+                </label>
+                <select
+                  id="pf-disponibilidad"
+                  name="availability"
+                  defaultValue={availability}
+                  className="w-full rounded-md border border-border-default bg-surface-sunken px-3 py-2.5 text-sm text-content-primary focus:border-brand focus:outline-none"
+                >
+                  <option value="">Sin especificar</option>
+                  {availabilityOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label
+                htmlFor="pf-certificaciones"
+                className="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-tertiary"
+              >
+                Certificaciones (opcional)
+              </label>
+              <input
+                id="pf-certificaciones"
+                name="certifications"
+                type="text"
+                placeholder="Ej. Instalador eléctrico certificado RITE"
+                defaultValue={certifications}
+                className="w-full rounded-md border border-border-default bg-surface-sunken px-3 py-2.5 text-sm text-content-primary placeholder:text-content-tertiary focus:border-brand focus:outline-none"
+              />
             </div>
             <div>
               <label

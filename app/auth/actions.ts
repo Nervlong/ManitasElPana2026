@@ -212,10 +212,10 @@ export async function updateProfile(
     avatarUrl = `${publicUrl}?v=${Date.now()}`;
   }
 
-  // specialty/bio/coverageZone/whatsapp solo se guardan si el form los
-  // manda — el formulario de cliente no incluye esos campos, así que
-  // quedan intactos (no se pisan con vacío) para esa cuenta.
-  const updates: Record<string, string> = { full_name: fullName };
+  // specialty/bio/coverageZone/whatsapp/etc. solo se guardan si el form
+  // los manda — el formulario de cliente no incluye esos campos, así
+  // que quedan intactos (no se pisan con vacío) para esa cuenta.
+  const updates: Record<string, unknown> = { full_name: fullName };
   if (formData.has("specialty")) updates.specialty = String(formData.get("specialty") ?? "");
   if (formData.has("bio")) updates.bio = String(formData.get("bio") ?? "");
   if (formData.has("coverageZone")) {
@@ -223,6 +223,16 @@ export async function updateProfile(
   }
   if (formData.has("whatsapp")) {
     updates.whatsapp_number = String(formData.get("whatsapp") ?? "").trim();
+  }
+  if (formData.has("yearsExperience")) {
+    const raw = String(formData.get("yearsExperience") ?? "").trim();
+    updates.years_experience = raw === "" ? null : Number(raw);
+  }
+  if (formData.has("certifications")) {
+    updates.certifications = String(formData.get("certifications") ?? "").trim() || null;
+  }
+  if (formData.has("availability")) {
+    updates.availability = String(formData.get("availability") ?? "").trim() || null;
   }
   if (avatarUrl) updates.avatar_url = avatarUrl;
 

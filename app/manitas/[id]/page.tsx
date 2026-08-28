@@ -9,10 +9,25 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, MapPin, ShieldCheck, Star, Wrench } from "lucide-react";
+import {
+  ArrowLeft,
+  Award,
+  Clock3,
+  MapPin,
+  MessageCircle,
+  ShieldCheck,
+  Star,
+  Wrench,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { UserMenu } from "@/components/user-menu";
 import { SiteFooter } from "@/components/site-footer";
+
+const availabilityLabels: Record<string, string> = {
+  inmediata: "Disponibilidad inmediata",
+  esta_semana: "Disponible esta semana",
+  a_coordinar: "Disponibilidad a coordinar",
+};
 
 function formatDate(iso: string): string {
   return new Intl.DateTimeFormat("es-ES", {
@@ -20,6 +35,13 @@ function formatDate(iso: string): string {
     month: "long",
     year: "numeric",
   }).format(new Date(iso));
+}
+
+// Convierte "+34 600 000 000" a "34600000000" para el link wa.me — solo
+// dígitos, sin +, espacios ni guiones (formato que exige la API de
+// WhatsApp Click to Chat).
+function toWhatsAppLink(number: string): string {
+  return `https://wa.me/${number.replace(/\D/g, "")}`;
 }
 
 interface ManitaProfilePageProps {
@@ -55,7 +77,9 @@ export default async function ManitaProfilePage({ params }: ManitaProfilePagePro
 
   const { data: manita } = await supabase
     .from("profiles")
-    .select("id, full_name, avatar_url, specialty, bio, coverage_zone, is_verified, created_at")
+    .select(
+      "id, full_name, avatar_url, specialty, bio, coverage_zone, is_verified, created_at, whatsapp_number, years_experience, certifications, availability"
+    )
     .eq("id", id)
     .or("role.eq.manita,and(role.eq.admin,is_active_manita.eq.true)")
     .maybeSingle();
@@ -64,18 +88,29 @@ export default async function ManitaProfilePage({ params }: ManitaProfilePagePro
     notFound();
   }
 
-  const [{ data: reviews }, { count: completedJobs }] = await Promise.all([
-    supabase
-      .from("reviews")
-      .select("id, rating, comment, created_at, client_id")
-      .eq("pro_id", manita.id)
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("jobs")
-      .select("id", { count: "exact", head: true })
-      .eq("pro_id", manita.id)
-      .eq("status", "completed"),
-  ]);
+  const [{ data: reviews }, { count: completedJobs }, { data: workPhotosData }] =
+    await Promise.all([
+      supabase
+        .from("reviews")
+        .select("id, rating, comment, created_at, client_id")
+        .eq("pro_id", manita.id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("jobs")
+        .select("id", { count: "exact", head: true })
+        .eq("pro_id", manita.id)
+        .eq("status", "completed"),
+      supabase
+        .from("work_photos")
+        .select("id, storage_path")
+        .eq("user_id", manita.id)
+        .order("created_at", { ascending: false }),
+    ]);
+
+  const workPhotos = (workPhotosData ?? []).map((p) => ({
+    id: p.id,
+    url: supabase.storage.from("work-photos").getPublicUrl(p.storage_path).data.publicUrl,
+  }));
 
   // Nombres de los clientes que dejaron review, para mostrarlos sin
   // exponer más que el nombre (no email ni otros datos del cliente).
@@ -141,59 +176,95 @@ export default async function ManitaProfilePage({ params }: ManitaProfilePagePro
         </Link>
 
         {/* ---- Cabecera del perfil ---- */}
-        <div className="mt-6 flex flex-col items-start gap-5 rounded-2xl border border-border-default bg-surface-raised p-6 sm:flex-row sm:items-center sm:p-8">
-          <span className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand text-2xl font-semibold text-white">
-            {manita.avatar_url ? (
-              <Image
-                src={manita.avatar_url}
-                alt=""
-                width={80}
-                height={80}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              (manita.full_name || "M").charAt(0).toUpperCase()
-            )}
-          </span>
-
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl font-bold tracking-tight text-brand-dark">
-                {manita.full_name || "Manita"}
-              </h1>
-              {manita.is_verified && (
-                <span className="inline-flex items-center gap-1 rounded-md bg-status-success/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-status-success">
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                  Verificado
-                </span>
+        <div className="mt-6 flex flex-col gap-5 rounded-2xl border border-border-default bg-surface-raised p-6 sm:p-8">
+          <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
+            <span className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand text-2xl font-semibold text-white">
+              {manita.avatar_url ? (
+                <Image
+                  src={manita.avatar_url}
+                  alt=""
+                  width={80}
+                  height={80}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                (manita.full_name || "M").charAt(0).toUpperCase()
               )}
-            </div>
+            </span>
 
-            {manita.specialty && (
-              <p className="mt-1 flex items-center gap-1.5 text-sm font-medium text-content-secondary">
-                <Wrench className="h-3.5 w-3.5" />
-                {manita.specialty}
-              </p>
-            )}
-
-            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-content-tertiary">
-              <span className="flex items-center gap-1 font-semibold text-content-primary">
-                <Star className="h-4 w-4 fill-accent text-accent" />
-                {ratingAvg ? ratingAvg.toFixed(1) : "Sin calificaciones aún"}
-                {ratingCount > 0 && (
-                  <span className="font-normal text-content-tertiary">
-                    ({ratingCount} {ratingCount === 1 ? "reseña" : "reseñas"})
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-xl font-bold tracking-tight text-brand-dark">
+                  {manita.full_name || "Manita"}
+                </h1>
+                {manita.is_verified && (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-status-success/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-status-success">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    Verificado
                   </span>
                 )}
-              </span>
-              <span>{completedJobs ?? 0} trabajos completados</span>
-              {manita.coverage_zone && (
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-3.5 w-3.5" />
-                  {manita.coverage_zone}
+              </div>
+
+              {manita.specialty && (
+                <p className="mt-1 flex items-center gap-1.5 text-sm font-medium text-content-secondary">
+                  <Wrench className="h-3.5 w-3.5" />
+                  {manita.specialty}
+                  {manita.years_experience != null &&
+                    ` · ${manita.years_experience} años de experiencia`}
+                </p>
+              )}
+
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-content-tertiary">
+                <span className="flex items-center gap-1 font-semibold text-content-primary">
+                  <Star className="h-4 w-4 fill-accent text-accent" />
+                  {ratingAvg ? ratingAvg.toFixed(1) : "Sin calificaciones aún"}
+                  {ratingCount > 0 && (
+                    <span className="font-normal text-content-tertiary">
+                      ({ratingCount} {ratingCount === 1 ? "reseña" : "reseñas"})
+                    </span>
+                  )}
+                </span>
+                <span>{completedJobs ?? 0} trabajos completados</span>
+                {manita.coverage_zone && (
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3.5 w-3.5" />
+                    {manita.coverage_zone}
+                  </span>
+                )}
+              </div>
+
+              {manita.availability && (
+                <span className="mt-3 flex w-fit items-center gap-1 rounded-md bg-status-success/10 px-2.5 py-1 text-[11px] font-semibold text-status-success">
+                  <Clock3 className="h-3.5 w-3.5" />
+                  {availabilityLabels[manita.availability] ?? manita.availability}
                 </span>
               )}
             </div>
+          </div>
+
+          {/* ---- Contacto directo: WhatsApp + pedir presupuesto ---- */}
+          <div className="flex flex-col gap-2 border-t border-border-subtle pt-5 sm:flex-row">
+            {manita.whatsapp_number ? (
+              <a
+                href={toWhatsAppLink(manita.whatsapp_number)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-status-success px-5 py-3 text-sm font-semibold text-white transition-colors hover:opacity-90"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Contactar por WhatsApp
+              </a>
+            ) : (
+              <p className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-border-default px-5 py-3 text-sm text-content-tertiary">
+                Todavía no cargó su WhatsApp
+              </p>
+            )}
+            <Link
+              href="/presupuesto"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-brand px-5 py-3 text-sm font-semibold text-brand transition-colors hover:bg-brand hover:text-white"
+            >
+              Pedir presupuesto
+            </Link>
           </div>
         </div>
 
@@ -204,6 +275,38 @@ export default async function ManitaProfilePage({ params }: ManitaProfilePagePro
               Sobre {manita.full_name || "este profesional"}
             </h2>
             <p className="text-sm leading-relaxed text-content-secondary">{manita.bio}</p>
+          </div>
+        )}
+
+        {/* ---- Certificaciones ---- */}
+        {manita.certifications && (
+          <div className="mt-6 rounded-2xl border border-border-default bg-surface-raised p-6 sm:p-8">
+            <h2 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-content-tertiary">
+              <Award className="h-4 w-4" />
+              Certificaciones
+            </h2>
+            <p className="text-sm leading-relaxed text-content-secondary">
+              {manita.certifications}
+            </p>
+          </div>
+        )}
+
+        {/* ---- Galería de trabajos ---- */}
+        {workPhotos.length > 0 && (
+          <div className="mt-6 rounded-2xl border border-border-default bg-surface-raised p-6 sm:p-8">
+            <h2 className="mb-4 text-sm font-bold uppercase tracking-widest text-content-tertiary">
+              Trabajos realizados
+            </h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {workPhotos.map((photo) => (
+                <div
+                  key={photo.id}
+                  className="relative aspect-square overflow-hidden rounded-lg border border-border-default"
+                >
+                  <Image src={photo.url} alt="" fill sizes="200px" className="object-cover" />
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

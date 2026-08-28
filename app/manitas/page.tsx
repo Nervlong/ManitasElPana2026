@@ -4,15 +4,27 @@
 // políticas RLS que ya hacen público role = 'manita' en profiles y todas
 // las reviews. Reputación = promedio real de reviews + trabajos completados
 // reales, nada inventado.
-// Server Component: solo lectura, sin interactividad más allá de navegar.
+// Filtro por especialidad + búsqueda por nombre/zona, ambos vía
+// searchParams (?especialidad=&q=) — server-side, sin JS de cliente para
+// filtrar: recarga la página con el query nuevo, simple y funciona sin
+// JS habilitado.
+// Server Component: solo lectura, sin interactividad más allá de navegar
+// y los links de WhatsApp.
 // -----------------------------------------------------------------------------
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, MapPin, ShieldCheck, Star, Wrench } from "lucide-react";
+import { ArrowRight, MapPin, MessageCircle, ShieldCheck, Star, Wrench } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { UserMenu } from "@/components/user-menu";
 import { SiteFooter } from "@/components/site-footer";
+import { specialties } from "@/lib/catalog";
+
+const availabilityLabels: Record<string, string> = {
+  inmediata: "Disponibilidad inmediata",
+  esta_semana: "Disponible esta semana",
+  a_coordinar: "A coordinar",
+};
 
 interface ManitaCardData {
   id: string;
@@ -22,12 +34,29 @@ interface ManitaCardData {
   bio: string | null;
   coverage_zone: string | null;
   is_verified: boolean;
+  whatsapp_number: string | null;
+  years_experience: number | null;
+  availability: string | null;
   ratingAvg: number | null;
   ratingCount: number;
   completedJobs: number;
 }
 
-export default async function ManitasPage() {
+// Convierte "+34 600 000 000" a "34600000000" para el link wa.me — solo
+// dígitos, sin +, espacios ni guiones (formato que exige la API de
+// WhatsApp Click to Chat).
+function toWhatsAppLink(number: string): string {
+  return `https://wa.me/${number.replace(/\D/g, "")}`;
+}
+
+interface ManitasPageProps {
+  searchParams: Promise<{ especialidad?: string; q?: string }>;
+}
+
+export default async function ManitasPage({ searchParams }: ManitasPageProps) {
+  const { especialidad, q } = await searchParams;
+  const query = (q ?? "").trim().toLowerCase();
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -55,10 +84,18 @@ export default async function ManitasPage() {
   // Manitas reales + admins que se activaron como manita (RLS ya limita
   // esto a lo público, ver 0014_admin_active_manita.sql) — se filtra acá
   // también para claridad, aunque RLS es la garantía real.
-  const { data: manitas } = await supabase
+  let manitasQuery = supabase
     .from("profiles")
-    .select("id, full_name, avatar_url, specialty, bio, coverage_zone, is_verified, role")
-    .or("role.eq.manita,and(role.eq.admin,is_active_manita.eq.true)")
+    .select(
+      "id, full_name, avatar_url, specialty, bio, coverage_zone, is_verified, whatsapp_number, years_experience, availability, role"
+    )
+    .or("role.eq.manita,and(role.eq.admin,is_active_manita.eq.true)");
+
+  if (especialidad) {
+    manitasQuery = manitasQuery.eq("specialty", especialidad);
+  }
+
+  const { data: manitas } = await manitasQuery
     .order("is_verified", { ascending: false })
     .order("full_name", { ascending: true });
 
@@ -93,7 +130,7 @@ export default async function ManitasPage() {
     completedByPro.set(j.pro_id, (completedByPro.get(j.pro_id) ?? 0) + 1);
   }
 
-  const cards: ManitaCardData[] = (manitas ?? []).map((m) => {
+  let cards: ManitaCardData[] = (manitas ?? []).map((m) => {
     const rating = ratingsByPro.get(m.id);
     return {
       ...m,
@@ -102,6 +139,16 @@ export default async function ManitasPage() {
       completedJobs: completedByPro.get(m.id) ?? 0,
     };
   });
+
+  // Búsqueda por nombre/zona: se filtra en JS porque ya se trajeron
+  // pocas filas (directorio acotado), evita otra query a la base.
+  if (query) {
+    cards = cards.filter(
+      (m) =>
+        (m.full_name ?? "").toLowerCase().includes(query) ||
+        (m.coverage_zone ?? "").toLowerCase().includes(query)
+    );
+  }
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-surface">
@@ -158,77 +205,141 @@ export default async function ManitasPage() {
           </p>
         </div>
 
+        {/* ---- Filtros: especialidad + búsqueda, server-side vía GET ---- */}
+        <form className="mt-6 flex flex-col gap-3 sm:flex-row" action="/manitas">
+          <input
+            type="search"
+            name="q"
+            defaultValue={q ?? ""}
+            placeholder="Buscar por nombre o zona…"
+            className="flex-1 rounded-md border border-border-default bg-surface-raised px-3.5 py-2.5 text-sm text-content-primary placeholder:text-content-tertiary focus:border-brand focus:outline-none"
+          />
+          <select
+            name="especialidad"
+            defaultValue={especialidad ?? ""}
+            className="rounded-md border border-border-default bg-surface-raised px-3.5 py-2.5 text-sm text-content-primary focus:border-brand focus:outline-none sm:w-56"
+          >
+            <option value="">Todas las especialidades</option>
+            {specialties.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+          <button
+            type="submit"
+            className="rounded-md bg-brand px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-hover"
+          >
+            Filtrar
+          </button>
+          {(especialidad || q) && (
+            <Link
+              href="/manitas"
+              className="flex items-center justify-center rounded-md border border-border-default bg-surface-raised px-4 py-2.5 text-sm font-medium text-content-secondary transition-colors hover:text-content-primary"
+            >
+              Limpiar
+            </Link>
+          )}
+        </form>
+
         {cards.length === 0 ? (
           <div className="mt-10 rounded-2xl border border-border-default bg-surface-raised p-8 text-center text-sm text-content-tertiary">
-            Todavía no hay manitas publicados. Volvé pronto.
+            {especialidad || query
+              ? "No hay manitas que coincidan con la búsqueda."
+              : "Todavía no hay manitas publicados. Vuelve pronto."}
           </div>
         ) : (
           <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {cards.map((manita) => (
-              <Link
+              <div
                 key={manita.id}
-                href={`/manitas/${manita.id}`}
                 className="group flex flex-col gap-4 rounded-xl border border-border-default bg-surface-raised p-5 shadow-elevation-1 transition-all duration-200 hover:border-brand/40 hover:-translate-y-0.5 hover:shadow-elevation-3"
               >
-                <div className="flex items-start gap-3">
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand text-base font-semibold text-white">
-                    {manita.avatar_url ? (
-                      <Image
-                        src={manita.avatar_url}
-                        alt=""
-                        width={48}
-                        height={48}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      (manita.full_name || "M").charAt(0).toUpperCase()
-                    )}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <h2 className="flex items-center gap-1.5 truncate text-sm font-semibold text-content-primary">
-                      {manita.full_name || "Manita"}
-                      {manita.is_verified && (
-                        <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-status-success" />
+                <Link href={`/manitas/${manita.id}`} className="flex flex-col gap-4">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand text-base font-semibold text-white">
+                      {manita.avatar_url ? (
+                        <Image
+                          src={manita.avatar_url}
+                          alt=""
+                          width={48}
+                          height={48}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        (manita.full_name || "M").charAt(0).toUpperCase()
                       )}
-                    </h2>
-                    {manita.specialty && (
-                      <p className="flex items-center gap-1 text-xs text-content-tertiary">
-                        <Wrench className="h-3 w-3 shrink-0" />
-                        {manita.specialty}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {manita.bio && (
-                  <p className="line-clamp-2 text-xs leading-relaxed text-content-secondary">
-                    {manita.bio}
-                  </p>
-                )}
-
-                <div className="mt-auto flex items-center justify-between gap-2 border-t border-border-subtle pt-3 text-xs text-content-tertiary">
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1 font-semibold text-content-primary">
-                      <Star className="h-3.5 w-3.5 fill-accent text-accent" />
-                      {manita.ratingAvg ? manita.ratingAvg.toFixed(1) : "—"}
-                      <span className="font-normal text-content-tertiary">
-                        ({manita.ratingCount})
-                      </span>
                     </span>
-                    <span>{manita.completedJobs} trabajos</span>
+                    <div className="min-w-0 flex-1">
+                      <h2 className="flex items-center gap-1.5 truncate text-sm font-semibold text-content-primary">
+                        {manita.full_name || "Manita"}
+                        {manita.is_verified && (
+                          <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-status-success" />
+                        )}
+                      </h2>
+                      {manita.specialty && (
+                        <p className="flex items-center gap-1 text-xs text-content-tertiary">
+                          <Wrench className="h-3 w-3 shrink-0" />
+                          {manita.specialty}
+                          {manita.years_experience != null &&
+                            ` · ${manita.years_experience} años`}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  {manita.coverage_zone && (
-                    <span className="flex items-center gap-1 truncate">
-                      <MapPin className="h-3 w-3 shrink-0" />
-                      {manita.coverage_zone}
+
+                  {manita.bio && (
+                    <p className="line-clamp-2 text-xs leading-relaxed text-content-secondary">
+                      {manita.bio}
+                    </p>
+                  )}
+
+                  {manita.availability && (
+                    <span className="w-fit rounded-md bg-status-success/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-status-success">
+                      {availabilityLabels[manita.availability] ?? manita.availability}
                     </span>
                   )}
-                </div>
 
-                <span className="flex items-center gap-1 text-xs font-semibold text-brand opacity-0 transition-opacity group-hover:opacity-100">
-                  Ver perfil <ArrowRight className="h-3 w-3" />
-                </span>
-              </Link>
+                  <div className="flex items-center justify-between gap-2 border-t border-border-subtle pt-3 text-xs text-content-tertiary">
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center gap-1 font-semibold text-content-primary">
+                        <Star className="h-3.5 w-3.5 fill-accent text-accent" />
+                        {manita.ratingAvg ? manita.ratingAvg.toFixed(1) : "—"}
+                        <span className="font-normal text-content-tertiary">
+                          ({manita.ratingCount})
+                        </span>
+                      </span>
+                      <span>{manita.completedJobs} trabajos</span>
+                    </div>
+                    {manita.coverage_zone && (
+                      <span className="flex items-center gap-1 truncate">
+                        <MapPin className="h-3 w-3 shrink-0" />
+                        {manita.coverage_zone}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+
+                <div className="mt-auto flex items-center gap-2">
+                  <Link
+                    href={`/manitas/${manita.id}`}
+                    className="flex flex-1 items-center justify-center gap-1 rounded-md border border-border-default px-3 py-2 text-xs font-semibold text-content-secondary transition-colors group-hover:border-brand/40 group-hover:text-brand"
+                  >
+                    Ver perfil <ArrowRight className="h-3 w-3" />
+                  </Link>
+                  {manita.whatsapp_number && (
+                    <a
+                      href={toWhatsAppLink(manita.whatsapp_number)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Contactar por WhatsApp"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-status-success/30 bg-status-success/10 text-status-success transition-colors hover:bg-status-success/20"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                    </a>
+                  )}
+                </div>
+              </div>
             ))}
           </div>
         )}

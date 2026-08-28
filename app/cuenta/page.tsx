@@ -261,10 +261,10 @@ export default async function CuentaPage({ searchParams }: CuentaPageProps) {
                 description="Así te ven los clientes: especialidad, reputación y reseñas."
               />
               <AccountCard
+                href="/seguridad"
                 icon={<ImagePlus className="h-5 w-5" />}
                 title="Fotos de trabajos"
                 description="Sube fotos de tus trabajos para mostrar en tu perfil público."
-                comingSoon
               />
             </>
           )}
