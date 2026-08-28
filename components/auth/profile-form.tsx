@@ -97,7 +97,11 @@ export function ProfileForm({
               <select
                 id="pf-specialty"
                 name="specialty"
-                defaultValue={specialty}
+                defaultValue={
+                  specialties.includes(specialty as (typeof specialties)[number])
+                    ? specialty
+                    : ""
+                }
                 className="w-full rounded-md border border-border-default bg-surface-sunken px-3 py-2.5 text-sm text-content-primary focus:border-brand focus:outline-none"
               >
                 <option value="">Elige tu especialidad…</option>
@@ -106,12 +110,6 @@ export function ProfileForm({
                     {s}
                   </option>
                 ))}
-                {/* Si ya tenía guardado un valor libre de antes de este
-                    cambio y no está en la lista, se conserva como opción
-                    extra para no perderlo silenciosamente al abrir el form. */}
-                {specialty && !specialties.includes(specialty as (typeof specialties)[number]) && (
-                  <option value={specialty}>{specialty}</option>
-                )}
               </select>
             </div>
             <div>
