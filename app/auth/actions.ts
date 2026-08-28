@@ -77,7 +77,9 @@ export async function signIn(
     }
   }
 
-  redirect("/panel");
+  // Al home, no directo a /panel — desde ahí cada uno navega a su
+  // pantalla de trabajo (panel/admin) con el menú de usuario.
+  redirect("/");
 }
 
 export async function signOut() {

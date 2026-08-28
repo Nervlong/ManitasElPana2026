@@ -89,6 +89,7 @@ export default async function HomePage() {
   let avatarUrl: string | null = null;
   let isManita = false;
   let isAdmin = false;
+  let firstName: string | null = null;
 
   if (user) {
     const { data: profile } = await supabase
@@ -102,6 +103,7 @@ export default async function HomePage() {
     isAdmin = profile?.role === "admin";
     const nameForInitial = profile?.full_name || user.email || "U";
     initial = nameForInitial.charAt(0).toUpperCase();
+    firstName = (profile?.full_name || user.email?.split("@")[0] || "").split(" ")[0];
   }
 
   return (
@@ -130,12 +132,17 @@ export default async function HomePage() {
           </Link>
         </nav>
         {user ? (
-          <UserMenu
-            initial={initial ?? "U"}
-            avatarUrl={avatarUrl}
-            isManita={isManita}
-            isAdmin={isAdmin}
-          />
+          <div className="flex items-center gap-3">
+            <span className="hidden text-sm font-medium text-content-secondary sm:block">
+              Hola, {firstName}
+            </span>
+            <UserMenu
+              initial={initial ?? "U"}
+              avatarUrl={avatarUrl}
+              isManita={isManita}
+              isAdmin={isAdmin}
+            />
+          </div>
         ) : (
           <Link
             href="/login"
