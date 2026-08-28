@@ -42,6 +42,7 @@ interface ProfileFormProps {
   specialty: string;
   bio: string;
   coverageZone: string;
+  whatsappNumber: string;
 }
 
 export function ProfileForm({
@@ -51,6 +52,7 @@ export function ProfileForm({
   specialty,
   bio,
   coverageZone,
+  whatsappNumber,
 }: ProfileFormProps) {
   const [state, formAction] = useFormState(updateProfile, initialState);
   const initial = (fullName || "U").charAt(0).toUpperCase();
@@ -115,6 +117,26 @@ export function ProfileForm({
                 defaultValue={coverageZone}
                 className="w-full rounded-md border border-border-default bg-surface-sunken px-3 py-2.5 text-sm text-content-primary placeholder:text-content-tertiary focus:border-brand focus:outline-none"
               />
+            </div>
+            <div>
+              <label
+                htmlFor="pf-whatsapp"
+                className="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-tertiary"
+              >
+                WhatsApp
+              </label>
+              <input
+                id="pf-whatsapp"
+                name="whatsapp"
+                type="tel"
+                required
+                placeholder="+34 600 000 000"
+                defaultValue={whatsappNumber}
+                className="w-full rounded-md border border-border-default bg-surface-sunken px-3 py-2.5 text-sm text-content-primary placeholder:text-content-tertiary focus:border-brand focus:outline-none"
+              />
+              <p className="mt-1 text-xs text-content-tertiary">
+                Así te contactan los clientes para coordinar los trabajos.
+              </p>
             </div>
             <div>
               <label

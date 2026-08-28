@@ -143,7 +143,7 @@ async function ClientDataFetcher({
   const { data } = await supabase
     .from("jobs")
     .select(
-      "service_type, status, price, address, pro:profiles!jobs_pro_id_fkey(full_name, is_verified)"
+      "service_type, status, price, address, pro:profiles!jobs_pro_id_fkey(full_name, is_verified, whatsapp_number)"
     )
     .eq("client_id", userId)
     .not("status", "in", "(completed,cancelled)")
@@ -161,6 +161,9 @@ async function ClientDataFetcher({
           (data.pro as unknown as { full_name: string | null } | null)?.full_name ?? null,
         pro_is_verified:
           (data.pro as unknown as { is_verified: boolean } | null)?.is_verified ?? false,
+        pro_whatsapp:
+          (data.pro as unknown as { whatsapp_number: string | null } | null)?.whatsapp_number ??
+          null,
       }
     : null;
 
@@ -211,7 +214,7 @@ async function ProDataFetcher({
       supabase
         .from("jobs")
         .select(
-          "id, service_type, address, scheduled_at, price, status, client:profiles!jobs_client_id_fkey(full_name)"
+          "id, service_type, address, scheduled_at, price, status, client:profiles!jobs_client_id_fkey(full_name, whatsapp_number)"
         )
         .eq("pro_id", userId)
         .not("status", "in", "(completed,cancelled)")
@@ -235,16 +238,22 @@ async function ProDataFetcher({
         .limit(10),
     ]);
 
-  const agenda = (agendaData ?? []).map((job) => ({
-    id: job.id,
-    client_full_name:
-      (job.client as unknown as { full_name: string | null } | null)?.full_name ?? null,
-    service_type: job.service_type,
-    address: job.address,
-    scheduled_at: job.scheduled_at,
-    price: Number(job.price),
-    status: job.status,
-  }));
+  const agenda = (agendaData ?? []).map((job) => {
+    const client = job.client as unknown as {
+      full_name: string | null;
+      whatsapp_number: string | null;
+    } | null;
+    return {
+      id: job.id,
+      client_full_name: client?.full_name ?? null,
+      client_whatsapp: client?.whatsapp_number ?? null,
+      service_type: job.service_type,
+      address: job.address,
+      scheduled_at: job.scheduled_at,
+      price: Number(job.price),
+      status: job.status,
+    };
+  });
 
   const available = (availableData ?? []).map((job) => ({
     id: job.id,

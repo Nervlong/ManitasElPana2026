@@ -103,19 +103,24 @@ export async function becomeManita(formData: FormData) {
     redirect("/cuenta?error=debes_aceptar_terminos_autonomo");
   }
 
+  const whatsapp = String(formData.get("whatsapp") ?? "").trim();
+  if (whatsapp.length < 8) {
+    redirect("/cuenta?error=whatsapp_invalido");
+  }
+
   // Ya NO cambia el rol automáticamente: crea una solicitud pendiente
   // que un admin debe aprobar (review_manita_request). El rol sigue
   // siendo "cliente" hasta que eso pase — ver
   // supabase/migrations/0006_manita_requests.sql. El índice único evita
   // duplicar la solicitud si ya hay una pendiente (se ignora el error).
   //
-  // El RPC exige accept_autonomo_terms=true y lo graba con fecha en la
-  // fila (supabase/migrations/0007_manita_autonomo_acceptance.sql) — no
-  // es solo un checkbox de UI, queda como evidencia de que el manita
-  // confirmó que opera como profesional autónomo independiente, no como
-  // empleado de la plataforma.
+  // El RPC exige accept_autonomo_terms=true y un whatsapp válido, y
+  // graba fecha de aceptación (0007/0015) — no es solo UI, queda como
+  // evidencia de que el manita confirmó que opera como autónomo
+  // independiente, no como empleado de la plataforma.
   const { error } = await supabase.rpc("become_manita", {
     accept_autonomo_terms: true,
+    whatsapp,
   });
 
   if (error) {
@@ -168,14 +173,17 @@ export async function updateProfile(
     return { error: "El nombre no puede estar vacío" };
   }
 
-  // specialty/bio/coverageZone solo se guardan si el form los manda — el
-  // formulario de cliente no incluye esos campos, así que quedan
-  // intactos (no se pisan con vacío) para esa cuenta.
+  // specialty/bio/coverageZone/whatsapp solo se guardan si el form los
+  // manda — el formulario de cliente no incluye esos campos, así que
+  // quedan intactos (no se pisan con vacío) para esa cuenta.
   const updates: Record<string, string> = { full_name: fullName };
   if (formData.has("specialty")) updates.specialty = String(formData.get("specialty") ?? "");
   if (formData.has("bio")) updates.bio = String(formData.get("bio") ?? "");
   if (formData.has("coverageZone")) {
     updates.coverage_zone = String(formData.get("coverageZone") ?? "");
+  }
+  if (formData.has("whatsapp")) {
+    updates.whatsapp_number = String(formData.get("whatsapp") ?? "").trim();
   }
 
   const { error } = await supabase.from("profiles").update(updates).eq("id", user.id);

@@ -128,6 +128,7 @@ const cuentaErrors: Record<string, string> = {
   solicitud_fallida: "No pudimos enviar la solicitud. Prueba de nuevo.",
   ya_no_eres_cliente:
     "Ya no eres cliente, así que no puedes volver a solicitar pasar a manita.",
+  whatsapp_invalido: "Indica un número de WhatsApp válido para poder enviar la solicitud.",
 };
 
 export default async function CuentaPage({ searchParams }: CuentaPageProps) {

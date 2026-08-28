@@ -3,6 +3,8 @@
 // tomar + agenda del día + métricas. Recibe los datos reales (jobs) ya
 // resueltos por app/panel/page.tsx. Server Component: tomar un trabajo y
 // avanzar su estado son Server Actions (app/panel/actions.ts).
+// "Contactar" abre WhatsApp directo (wa.me) cuando el cliente cargó su
+// número — no hay chat dentro de la app.
 // -----------------------------------------------------------------------------
 
 import {
@@ -11,6 +13,7 @@ import {
   Clock,
   ListChecks,
   MapPin,
+  MessageCircle,
   Navigation,
   Star,
   Wallet,
@@ -32,9 +35,17 @@ function formatTime(iso: string): string {
   }).format(new Date(iso)) + "h";
 }
 
+// Convierte "+34 600 000 000" a "34600000000" para el link wa.me — solo
+// dígitos, sin +, espacios ni guiones (formato que exige la API de
+// WhatsApp Click to Chat).
+function toWhatsAppLink(number: string): string {
+  return `https://wa.me/${number.replace(/\D/g, "")}`;
+}
+
 interface AgendaJob {
   id: string;
   client_full_name: string | null;
+  client_whatsapp: string | null;
   service_type: string;
   address: string | null;
   scheduled_at: string;
@@ -237,6 +248,11 @@ export function ProPanel({
                         </span>
                       )}
                     </div>
+                    {job.client_full_name && (
+                      <p className="text-sm font-medium text-content-secondary">
+                        Cliente: {job.client_full_name}
+                      </p>
+                    )}
                     <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-content-tertiary">
                       <span className="flex items-center gap-1 font-medium text-content-primary">
                         <Clock className="h-4 w-4 text-brand" />
@@ -251,36 +267,49 @@ export function ProPanel({
                     </div>
                   </div>
 
-                  <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border-subtle pt-4 sm:flex-col sm:items-end sm:border-t-0 sm:pt-0">
+                  <div className="flex shrink-0 flex-col items-end gap-3 border-t border-border-subtle pt-4 sm:border-t-0 sm:pt-0">
                     <span className="tabular-nums font-mono text-lg font-semibold text-brand-dark">
                       {formatEUR(job.price)}
                     </span>
-                    <form action={advanceJobStatus}>
-                      <input type="hidden" name="jobId" value={job.id} />
-                      <input type="hidden" name="currentStatus" value={job.status} />
-                      <button
-                        type="submit"
-                        className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-colors ${
-                          isNext
-                            ? "bg-brand text-white hover:bg-brand-hover"
-                            : "border border-border-default bg-surface-sunken text-brand-dark hover:border-brand"
-                        }`}
-                      >
-                        {job.status === "assigned" && (
-                          <>
-                            <Navigation className="h-4 w-4" />
-                            Salir hacia el trabajo
-                          </>
-                        )}
-                        {job.status === "in_transit" && "Marcar en curso"}
-                        {job.status === "in_progress" && (
-                          <>
-                            <CheckCircle2 className="h-4 w-4" />
-                            Marcar completado
-                          </>
-                        )}
-                      </button>
-                    </form>
+                    <div className="flex items-center gap-2">
+                      {job.client_whatsapp && (
+                        <a
+                          href={toWhatsAppLink(job.client_whatsapp)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Contactar por WhatsApp"
+                          className="flex h-9 w-9 items-center justify-center rounded-xl border border-status-success/30 bg-status-success/10 text-status-success transition-colors hover:bg-status-success/20"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </a>
+                      )}
+                      <form action={advanceJobStatus}>
+                        <input type="hidden" name="jobId" value={job.id} />
+                        <input type="hidden" name="currentStatus" value={job.status} />
+                        <button
+                          type="submit"
+                          className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-colors ${
+                            isNext
+                              ? "bg-brand text-white hover:bg-brand-hover"
+                              : "border border-border-default bg-surface-sunken text-brand-dark hover:border-brand"
+                          }`}
+                        >
+                          {job.status === "assigned" && (
+                            <>
+                              <Navigation className="h-4 w-4" />
+                              Salir hacia el trabajo
+                            </>
+                          )}
+                          {job.status === "in_transit" && "Marcar en curso"}
+                          {job.status === "in_progress" && (
+                            <>
+                              <CheckCircle2 className="h-4 w-4" />
+                              Marcar completado
+                            </>
+                          )}
+                        </button>
+                      </form>
+                    </div>
                   </div>
                 </div>
               );

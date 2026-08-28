@@ -1,8 +1,13 @@
 // -----------------------------------------------------------------------------
 // app/presupuesto/page.tsx — Página dedicada de solicitud de presupuesto.
-// Accesible sin sesión (cualquiera puede pedir presupuesto sin loguearse).
+// Visible sin sesión (cualquiera puede ver qué se pide), pero enviar la
+// solicitud exige login — jobs.client_id necesita un usuario real, y el
+// cliente necesita poder ver el estado después en /panel. QuoteForm
+// muestra un aviso con login/registro si no hay sesión, en vez de
+// ocultar el formulario.
 // Server Component (RSC): layout y copy estáticos. La única isla
-// interactiva es <QuoteForm />.
+// interactiva es <QuoteForm />, conectada a createQuoteRequest (Server
+// Action) que crea el job real en la tabla jobs.
 // -----------------------------------------------------------------------------
 
 import Image from "next/image";
@@ -12,7 +17,13 @@ import { QuoteForm } from "@/components/quote-form";
 import { AppHeader } from "@/components/app-header";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function PresupuestoPage() {
+interface PresupuestoPageProps {
+  searchParams: Promise<{ enviado?: string; error?: string }>;
+}
+
+export default async function PresupuestoPage({ searchParams }: PresupuestoPageProps) {
+  const { enviado, error } = await searchParams;
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -86,7 +97,7 @@ export default async function PresupuestoPage() {
             </p>
           </div>
 
-          <QuoteForm />
+          <QuoteForm isLoggedIn={!!user} success={enviado === "1"} errorCode={error} />
         </div>
       </section>
     </main>

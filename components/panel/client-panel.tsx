@@ -3,12 +3,14 @@
 // Recibe el job real (o null) ya resuelto por app/panel/page.tsx. El "mapa"
 // sigue siendo una imagen estática + un punto animado, sin integración real
 // de mapas/GPS — eso queda para una fase futura si se decide un proveedor.
-// Server Component: sin interactividad más allá del botón de contacto
-// (que hoy no hace nada, queda como placeholder de UI).
+// "Contactar al profesional" abre WhatsApp directo (wa.me) — no hay chat
+// dentro de la app, el WhatsApp del manita es obligatorio (ver
+// 0015_whatsapp_and_job_requests.sql).
+// Server Component: sin interactividad más allá del link de WhatsApp.
 // -----------------------------------------------------------------------------
 
 import Image from "next/image";
-import { Clock, ShieldCheck } from "lucide-react";
+import { Clock, MessageCircle, ShieldCheck } from "lucide-react";
 import { ReviewForm } from "@/components/panel/review-form";
 
 const statusLabels: Record<string, string> = {
@@ -35,6 +37,14 @@ interface ActiveJob {
   address: string | null;
   pro_full_name: string | null;
   pro_is_verified: boolean;
+  pro_whatsapp: string | null;
+}
+
+// Convierte "+34 600 000 000" a "34600000000" para el link wa.me — solo
+// dígitos, sin +, espacios ni guiones (formato que exige la API de
+// WhatsApp Click to Chat).
+function toWhatsAppLink(number: string): string {
+  return `https://wa.me/${number.replace(/\D/g, "")}`;
 }
 
 interface JobToReview {
@@ -131,13 +141,22 @@ export function ClientPanel({ fullName, activeJob, jobToReview }: ClientPanelPro
               )}
             </div>
 
-            <button
-              type="button"
-              className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-border-default py-3.5 text-sm font-bold text-brand-dark transition-colors hover:border-brand"
-            >
-              <Clock className="h-4 w-4" />
-              Contactar al profesional
-            </button>
+            {activeJob.pro_whatsapp ? (
+              <a
+                href={toWhatsAppLink(activeJob.pro_whatsapp)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-status-success bg-status-success/10 py-3.5 text-sm font-bold text-status-success transition-colors hover:bg-status-success/20"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Contactar por WhatsApp
+              </a>
+            ) : (
+              <p className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-border-default py-3.5 text-sm font-medium text-content-tertiary">
+                <Clock className="h-4 w-4" />
+                El profesional todavía no cargó su WhatsApp
+              </p>
+            )}
           </div>
         </div>
       ) : (

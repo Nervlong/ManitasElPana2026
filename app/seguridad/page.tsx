@@ -55,7 +55,7 @@ export default async function SeguridadPage({ searchParams }: SeguridadPageProps
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "role, full_name, avatar_url, specialty, bio, coverage_zone, is_active_manita"
+      "role, full_name, avatar_url, specialty, bio, coverage_zone, is_active_manita, whatsapp_number"
     )
     .eq("id", user.id)
     .single();
@@ -139,6 +139,7 @@ export default async function SeguridadPage({ searchParams }: SeguridadPageProps
             specialty={profile?.specialty ?? ""}
             bio={profile?.bio ?? ""}
             coverageZone={profile?.coverage_zone ?? ""}
+            whatsappNumber={profile?.whatsapp_number ?? ""}
           />
         </div>
 
