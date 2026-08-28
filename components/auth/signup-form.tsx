@@ -4,25 +4,36 @@
 // SignupForm — formulario de registro con selección de rol (cliente/manita).
 // El rol "admin" nunca aparece acá: se asigna a mano en la base de datos.
 // Client Component: usa useFormState/useFormStatus (React 18 + react-dom)
-// para conectar con la Server Action.
+// para conectar con la Server Action. El selector de rol es un segmented
+// control animado (framer-motion, layoutId) en vez de dos botones sólidos
+// — mismo patrón de tokens que el resto del sitio (brand/content-*), sin
+// introducir una paleta paralela.
 // -----------------------------------------------------------------------------
 
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
+import { motion } from "framer-motion";
 import { Hammer, Loader2, User } from "lucide-react";
 import { signUp, type AuthFormState } from "@/app/auth/actions";
 import { GoogleSignInButton } from "@/components/auth/google-signin-button";
 
 const initialState: AuthFormState = {};
 
+const inputClassName =
+  "w-full rounded-lg border border-border-default bg-surface-raised px-3.5 py-2.5 text-sm text-content-primary placeholder:text-content-tertiary/70 transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/10";
+
+const labelClassName = "mb-1.5 block text-sm font-medium text-content-primary";
+
 function SubmitButton() {
   const { pending } = useFormStatus();
 
   return (
-    <button
+    <motion.button
+      whileHover={pending ? undefined : { scale: 1.01 }}
+      whileTap={pending ? undefined : { scale: 0.99 }}
       type="submit"
       disabled={pending}
-      className="inline-flex items-center justify-center gap-2 rounded-md bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-hover disabled:opacity-70"
+      className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-hover disabled:opacity-70"
     >
       {pending ? (
         <>
@@ -32,7 +43,7 @@ function SubmitButton() {
       ) : (
         "Crear cuenta"
       )}
-    </button>
+    </motion.button>
   );
 }
 
@@ -54,42 +65,39 @@ export function SignupForm() {
       </div>
 
       <form action={formAction} className="flex flex-col gap-5">
-        {/* Selección de rol */}
+        {/* Selección de rol: segmented control con fondo deslizante */}
         <div>
-          <p className="mb-2 text-xs font-medium uppercase tracking-widest text-content-tertiary">
-            Quiero registrarme como
-          </p>
-          <div className="flex divide-x divide-border-subtle overflow-hidden rounded-md border border-border-subtle bg-surface-sunken">
-            <button
-              type="button"
-              onClick={() => setRole("cliente")}
-              className={`flex flex-1 items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
-                role === "cliente"
-                  ? "bg-brand text-white"
-                  : "text-content-secondary hover:bg-surface-raised"
-              }`}
-            >
-              <User size={16} />
-              Cliente
-            </button>
-            <button
-              type="button"
-              onClick={() => setRole("manita")}
-              className={`flex flex-1 items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
-                role === "manita"
-                  ? "bg-accent text-accent-contrast"
-                  : "text-content-secondary hover:bg-surface-raised"
-              }`}
-            >
-              <Hammer size={16} />
-              Manita (profesional)
-            </button>
+          <p className={labelClassName}>Quiero registrarme como</p>
+          <div className="relative flex gap-1 rounded-lg border border-border-default bg-surface-sunken p-1">
+            {(["cliente", "manita"] as const).map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => setRole(r)}
+                className={`relative z-10 flex flex-1 items-center justify-center gap-2 rounded-md py-2 text-sm font-medium transition-colors ${
+                  role === r ? "text-brand" : "text-content-secondary hover:text-content-primary"
+                }`}
+              >
+                {role === r && (
+                  <motion.div
+                    layoutId="signupRole"
+                    className="absolute inset-0 rounded-md bg-surface-raised"
+                    style={{ boxShadow: "var(--shadow-elevation-1)" }}
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                  />
+                )}
+                <span className="relative z-10 flex items-center gap-2">
+                  {r === "cliente" ? <User size={16} /> : <Hammer size={16} />}
+                  {r === "cliente" ? "Cliente" : "Manita (profesional)"}
+                </span>
+              </button>
+            ))}
           </div>
           <input type="hidden" name="role" value={role} />
         </div>
 
         <div>
-          <label htmlFor="su-nombre" className="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-tertiary">
+          <label htmlFor="su-nombre" className={labelClassName}>
             Nombre completo
           </label>
           <input
@@ -98,12 +106,12 @@ export function SignupForm() {
             type="text"
             required
             placeholder="Tu nombre completo"
-            className="w-full rounded-md border border-border-default bg-surface-sunken px-3 py-2.5 text-sm text-content-primary placeholder:text-content-tertiary focus:border-brand focus:outline-none"
+            className={inputClassName}
           />
         </div>
 
         <div>
-          <label htmlFor="su-email" className="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-tertiary">
+          <label htmlFor="su-email" className={labelClassName}>
             Email
           </label>
           <input
@@ -112,12 +120,12 @@ export function SignupForm() {
             type="email"
             required
             placeholder="tu@email.com"
-            className="w-full rounded-md border border-border-default bg-surface-sunken px-3 py-2.5 text-sm text-content-primary placeholder:text-content-tertiary focus:border-brand focus:outline-none"
+            className={inputClassName}
           />
         </div>
 
         <div>
-          <label htmlFor="su-password" className="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-tertiary">
+          <label htmlFor="su-password" className={labelClassName}>
             Contraseña
           </label>
           <input
@@ -127,7 +135,7 @@ export function SignupForm() {
             required
             minLength={6}
             placeholder="Mínimo 6 caracteres"
-            className="w-full rounded-md border border-border-default bg-surface-sunken px-3 py-2.5 text-sm text-content-primary placeholder:text-content-tertiary focus:border-brand focus:outline-none"
+            className={inputClassName}
           />
         </div>
 
