@@ -11,6 +11,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import { Loader2 } from "lucide-react";
 import { updateProfile, type AuthFormState } from "@/app/auth/actions";
 import { AvatarUploadForm } from "@/components/auth/avatar-upload-form";
+import { specialties } from "@/lib/catalog";
 
 const initialState: AuthFormState = {};
 
@@ -93,14 +94,25 @@ export function ProfileForm({
               >
                 Especialidad
               </label>
-              <input
+              <select
                 id="pf-specialty"
                 name="specialty"
-                type="text"
-                placeholder="Ej. Fontanería, Electricidad…"
                 defaultValue={specialty}
-                className="w-full rounded-md border border-border-default bg-surface-sunken px-3 py-2.5 text-sm text-content-primary placeholder:text-content-tertiary focus:border-brand focus:outline-none"
-              />
+                className="w-full rounded-md border border-border-default bg-surface-sunken px-3 py-2.5 text-sm text-content-primary focus:border-brand focus:outline-none"
+              >
+                <option value="">Elige tu especialidad…</option>
+                {specialties.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+                {/* Si ya tenía guardado un valor libre de antes de este
+                    cambio y no está en la lista, se conserva como opción
+                    extra para no perderlo silenciosamente al abrir el form. */}
+                {specialty && !specialties.includes(specialty as (typeof specialties)[number]) && (
+                  <option value={specialty}>{specialty}</option>
+                )}
+              </select>
             </div>
             <div>
               <label

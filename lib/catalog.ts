@@ -65,3 +65,17 @@ export const catalog: CatalogItem[] = [
     tag: "Urgencias",
   },
 ];
+
+// ---- Especialidades para el selector de perfil de manita ------------------
+// Mismos servicios del catálogo + "Limpieza técnica" (que QuoteForm ya
+// ofrece pedir aunque no tiene su propia card en el catálogo) + "Otro"
+// para no bloquear a alguien cuyo oficio no está en la lista.
+export const specialties = [
+  "Montaje de muebles",
+  "Electricidad",
+  "Remodelación",
+  "Pintura",
+  "Fontanería",
+  "Limpieza técnica",
+  "Otro",
+] as const;
