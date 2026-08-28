@@ -97,6 +97,16 @@ function AccountCard({ icon, title, description, href, badge, comingSoon }: Acco
     (href ? " hover:border-brand/40 hover:-translate-y-0.5 hover:shadow-elevation-3" : " opacity-70");
 
   if (href) {
+    // Anclas dentro de la misma página (#seguridad) usan <a> nativo: el
+    // router de next/link a veces no dispara el scroll cuando el
+    // pathname no cambia (solo el hash), un <a> normal siempre lo hace.
+    if (href.startsWith("#")) {
+      return (
+        <a href={href} className={className}>
+          {content}
+        </a>
+      );
+    }
     return (
       <Link href={href} className={className}>
         {content}
