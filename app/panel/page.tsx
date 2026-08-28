@@ -40,6 +40,14 @@ export default async function PanelPage({ searchParams }: PanelPageProps) {
     .eq("id", user.id)
     .single();
 
+  // Marca la visita para el badge de "cambios no vistos" del header (ver
+  // components/app-header.tsx, checkJobUpdates). No bloquea el render si
+  // falla — es solo una marca de tiempo, no algo crítico.
+  await supabase
+    .from("profiles")
+    .update({ last_seen_panel_at: new Date().toISOString() })
+    .eq("id", user.id);
+
   const fullName = profile?.full_name || user.email?.split("@")[0] || "usuario";
   const isManita = profile?.role === "manita";
   const isAdmin = profile?.role === "admin";

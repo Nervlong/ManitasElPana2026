@@ -17,9 +17,10 @@ interface UserMenuProps {
   avatarUrl: string | null;
   isManita: boolean;
   isAdmin?: boolean;
+  hasJobUpdates?: boolean;
 }
 
-export function UserMenu({ initial, avatarUrl, isManita, isAdmin }: UserMenuProps) {
+export function UserMenu({ initial, avatarUrl, isManita, isAdmin, hasJobUpdates }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -38,7 +39,7 @@ export function UserMenu({ initial, avatarUrl, isManita, isAdmin }: UserMenuProp
       <button
         type="button"
         onClick={() => setIsOpen((v) => !v)}
-        className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-brand text-sm font-semibold text-white ring-2 ring-transparent transition-all hover:ring-brand/30"
+        className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-brand text-sm font-semibold text-white ring-2 ring-transparent transition-all hover:ring-brand/30"
         title="Mi cuenta"
         aria-haspopup="menu"
         aria-expanded={isOpen}
@@ -47,6 +48,9 @@ export function UserMenu({ initial, avatarUrl, isManita, isAdmin }: UserMenuProp
           <Image src={avatarUrl} alt="" width={40} height={40} className="h-full w-full object-cover" />
         ) : (
           initial
+        )}
+        {hasJobUpdates && (
+          <span className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full border-2 border-surface bg-status-danger" />
         )}
       </button>
 
@@ -64,6 +68,9 @@ export function UserMenu({ initial, avatarUrl, isManita, isAdmin }: UserMenuProp
           >
             <Briefcase className="h-4 w-4 text-content-tertiary" />
             {isManita ? "Mi agenda" : "Mis trabajos"}
+            {hasJobUpdates && (
+              <span className="ml-auto h-2 w-2 rounded-full bg-status-danger" />
+            )}
           </Link>
           <Link
             href="/cuenta"
