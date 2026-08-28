@@ -280,32 +280,32 @@ export default async function CuentaPage({ searchParams }: CuentaPageProps) {
 
           {isCliente && (
             <AccountCard
+              href="/direcciones"
               icon={<MapPin className="h-5 w-5" />}
               title="Direcciones"
               description="Guarda direcciones frecuentes para pedir servicios más rápido."
-              comingSoon
             />
           )}
 
           <AccountCard
+            href="/notificaciones"
             icon={<Bell className="h-5 w-5" />}
             title="Notificaciones"
-            description="Avisos por email o push sobre tus servicios."
-            comingSoon
+            description="Elige qué avisos quieres recibir por email."
           />
 
           <AccountCard
+            href="/historial"
             icon={<Clock3 className="h-5 w-5" />}
             title="Historial de servicios"
             description="Todos tus trabajos pasados en un solo lugar."
-            comingSoon
           />
 
           <AccountCard
+            href="/legal/ayuda"
             icon={<HelpCircle className="h-5 w-5" />}
             title="Ayuda y soporte"
             description="Preguntas frecuentes y contacto con el equipo."
-            comingSoon
           />
         </div>
 
