@@ -122,16 +122,21 @@ interface CuentaPageProps {
     actualizado?: string;
     password_actualizada?: string;
     solicitud_enviada?: string;
+    avatar_actualizado?: string;
     error?: string;
   }>;
 }
 
-const becomeManitaErrors: Record<string, string> = {
+const cuentaErrors: Record<string, string> = {
   debes_aceptar_terminos_autonomo:
     "Tienes que marcar la casilla de aceptación para enviar la solicitud.",
   solicitud_fallida: "No pudimos enviar la solicitud. Prueba de nuevo.",
   ya_no_eres_cliente:
     "Ya no eres cliente, así que no puedes volver a solicitar pasar a manita.",
+  sin_archivo: "Elige una imagen antes de subir.",
+  avatar_muy_grande: "La imagen no puede pesar más de 2 MB.",
+  avatar_no_subido: "No pudimos subir la imagen. Prueba de nuevo.",
+  avatar_no_guardado: "La imagen se subió pero no pudimos guardarla en tu perfil.",
 };
 
 export default async function CuentaPage({ searchParams }: CuentaPageProps) {
@@ -139,9 +144,10 @@ export default async function CuentaPage({ searchParams }: CuentaPageProps) {
     actualizado,
     password_actualizada: passwordActualizada,
     solicitud_enviada: solicitudEnviada,
+    avatar_actualizado: avatarActualizado,
     error,
   } = await searchParams;
-  const becomeManitaError = error ? becomeManitaErrors[error] : undefined;
+  const cuentaError = error ? cuentaErrors[error] : undefined;
 
   const supabase = await createClient();
   const {
@@ -222,21 +228,23 @@ export default async function CuentaPage({ searchParams }: CuentaPageProps) {
           </p>
         </div>
 
-        {(actualizado || passwordActualizada || solicitudEnviada) && (
+        {(actualizado || passwordActualizada || solicitudEnviada || avatarActualizado) && (
           <div className="flex items-center gap-2 rounded-xl border border-status-success/20 bg-status-success/10 px-4 py-3 text-sm font-medium text-status-success">
             <CheckCircle2 className="h-4 w-4 shrink-0" />
             {actualizado
               ? "Perfil actualizado correctamente."
               : passwordActualizada
                 ? "Contraseña actualizada correctamente."
-                : "Solicitud enviada. Un admin la va a revisar pronto."}
+                : avatarActualizado
+                  ? "Foto de perfil actualizada."
+                  : "Solicitud enviada. Un admin la va a revisar pronto."}
           </div>
         )}
 
-        {becomeManitaError && (
+        {cuentaError && (
           <div className="flex items-center gap-2 rounded-xl border border-status-danger/20 bg-status-danger/10 px-4 py-3 text-sm font-medium text-status-danger">
             <CheckCircle2 className="h-4 w-4 shrink-0" />
-            {becomeManitaError}
+            {cuentaError}
           </div>
         )}
 
@@ -370,7 +378,8 @@ export default async function CuentaPage({ searchParams }: CuentaPageProps) {
             </h3>
             <ProfileForm
               fullName={profile?.full_name ?? fullName}
-              isManita={isManita}
+              avatarUrl={profile?.avatar_url ?? null}
+              showManitaFields={isManita || isAdmin}
               specialty={profile?.specialty ?? ""}
               bio={profile?.bio ?? ""}
               coverageZone={profile?.coverage_zone ?? ""}

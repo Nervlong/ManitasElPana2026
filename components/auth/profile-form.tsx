@@ -1,7 +1,8 @@
 "use client";
 
 // -----------------------------------------------------------------------------
-// ProfileForm — edición de datos del perfil: nombre, y si es manita,
+// ProfileForm — edición de datos del perfil: foto, nombre, y si aplica
+// (manita o admin, que también puede trabajar como manita desde /panel),
 // specialty/bio/coverage_zone. Client Component: useFormState/useFormStatus
 // (React 18 + react-dom) para conectar con la Server Action.
 // -----------------------------------------------------------------------------
@@ -9,6 +10,7 @@
 import { useFormState, useFormStatus } from "react-dom";
 import { Loader2 } from "lucide-react";
 import { updateProfile, type AuthFormState } from "@/app/auth/actions";
+import { AvatarUploadForm } from "@/components/auth/avatar-upload-form";
 
 const initialState: AuthFormState = {};
 
@@ -35,7 +37,8 @@ function SubmitButton() {
 
 interface ProfileFormProps {
   fullName: string;
-  isManita: boolean;
+  avatarUrl: string | null;
+  showManitaFields: boolean;
   specialty: string;
   bio: string;
   coverageZone: string;
@@ -43,94 +46,105 @@ interface ProfileFormProps {
 
 export function ProfileForm({
   fullName,
-  isManita,
+  avatarUrl,
+  showManitaFields,
   specialty,
   bio,
   coverageZone,
 }: ProfileFormProps) {
   const [state, formAction] = useFormState(updateProfile, initialState);
+  const initial = (fullName || "U").charAt(0).toUpperCase();
 
   return (
-    <form action={formAction} className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6">
       <div>
-        <label
-          htmlFor="pf-nombre"
-          className="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-tertiary"
-        >
-          Nombre completo
-        </label>
-        <input
-          id="pf-nombre"
-          name="fullName"
-          type="text"
-          required
-          defaultValue={fullName}
-          className="w-full rounded-md border border-border-default bg-surface-sunken px-3 py-2.5 text-sm text-content-primary focus:border-brand focus:outline-none"
-        />
-      </div>
-
-      {isManita && (
-        <>
-          <div>
-            <label
-              htmlFor="pf-specialty"
-              className="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-tertiary"
-            >
-              Especialidad
-            </label>
-            <input
-              id="pf-specialty"
-              name="specialty"
-              type="text"
-              placeholder="Ej. Fontanería, Electricidad…"
-              defaultValue={specialty}
-              className="w-full rounded-md border border-border-default bg-surface-sunken px-3 py-2.5 text-sm text-content-primary placeholder:text-content-tertiary focus:border-brand focus:outline-none"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="pf-zona"
-              className="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-tertiary"
-            >
-              Zona de cobertura
-            </label>
-            <input
-              id="pf-zona"
-              name="coverageZone"
-              type="text"
-              placeholder="Ej. Madrid Centro"
-              defaultValue={coverageZone}
-              className="w-full rounded-md border border-border-default bg-surface-sunken px-3 py-2.5 text-sm text-content-primary placeholder:text-content-tertiary focus:border-brand focus:outline-none"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="pf-bio"
-              className="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-tertiary"
-            >
-              Descripción
-            </label>
-            <textarea
-              id="pf-bio"
-              name="bio"
-              rows={3}
-              placeholder="Contá tu experiencia…"
-              defaultValue={bio}
-              className="w-full resize-none rounded-md border border-border-default bg-surface-sunken px-3 py-2.5 text-sm text-content-primary placeholder:text-content-tertiary focus:border-brand focus:outline-none"
-            />
-          </div>
-        </>
-      )}
-
-      {state.error && (
-        <p className="rounded-md bg-status-danger/10 px-3 py-2 text-sm text-status-danger">
-          {state.error}
+        <p className="mb-2 text-xs font-medium uppercase tracking-widest text-content-tertiary">
+          Foto de perfil
         </p>
-      )}
-
-      <div>
-        <SubmitButton />
+        <AvatarUploadForm currentAvatarUrl={avatarUrl} initial={initial} />
       </div>
-    </form>
+
+      <form action={formAction} className="flex flex-col gap-5">
+        <div>
+          <label
+            htmlFor="pf-nombre"
+            className="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-tertiary"
+          >
+            Nombre completo
+          </label>
+          <input
+            id="pf-nombre"
+            name="fullName"
+            type="text"
+            required
+            defaultValue={fullName}
+            className="w-full rounded-md border border-border-default bg-surface-sunken px-3 py-2.5 text-sm text-content-primary focus:border-brand focus:outline-none"
+          />
+        </div>
+
+        {showManitaFields && (
+          <>
+            <div>
+              <label
+                htmlFor="pf-specialty"
+                className="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-tertiary"
+              >
+                Especialidad
+              </label>
+              <input
+                id="pf-specialty"
+                name="specialty"
+                type="text"
+                placeholder="Ej. Fontanería, Electricidad…"
+                defaultValue={specialty}
+                className="w-full rounded-md border border-border-default bg-surface-sunken px-3 py-2.5 text-sm text-content-primary placeholder:text-content-tertiary focus:border-brand focus:outline-none"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="pf-zona"
+                className="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-tertiary"
+              >
+                Zona de cobertura
+              </label>
+              <input
+                id="pf-zona"
+                name="coverageZone"
+                type="text"
+                placeholder="Ej. Madrid Centro"
+                defaultValue={coverageZone}
+                className="w-full rounded-md border border-border-default bg-surface-sunken px-3 py-2.5 text-sm text-content-primary placeholder:text-content-tertiary focus:border-brand focus:outline-none"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="pf-bio"
+                className="mb-1.5 block text-xs font-medium uppercase tracking-widest text-content-tertiary"
+              >
+                Descripción
+              </label>
+              <textarea
+                id="pf-bio"
+                name="bio"
+                rows={3}
+                placeholder="Cuenta tu experiencia…"
+                defaultValue={bio}
+                className="w-full resize-none rounded-md border border-border-default bg-surface-sunken px-3 py-2.5 text-sm text-content-primary placeholder:text-content-tertiary focus:border-brand focus:outline-none"
+              />
+            </div>
+          </>
+        )}
+
+        {state.error && (
+          <p className="rounded-md bg-status-danger/10 px-3 py-2 text-sm text-status-danger">
+            {state.error}
+          </p>
+        )}
+
+        <div>
+          <SubmitButton />
+        </div>
+      </form>
+    </div>
   );
 }

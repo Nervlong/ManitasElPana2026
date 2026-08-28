@@ -181,10 +181,65 @@ export async function updateProfile(
   const { error } = await supabase.from("profiles").update(updates).eq("id", user.id);
 
   if (error) {
-    return { error: "No se pudo guardar. Intentá de nuevo." };
+    return { error: "No se pudo guardar. Inténtalo de nuevo." };
   }
 
   redirect("/cuenta?actualizado=1");
+}
+
+export async function updateAvatar(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const file = formData.get("avatar") as File | null;
+  if (!file || file.size === 0) {
+    redirect("/cuenta?error=sin_archivo");
+  }
+
+  // 2MB / mimetypes ya los exige el bucket (0013_avatar_storage.sql),
+  // pero se re-valida acá para dar un mensaje claro antes de subir.
+  if (file!.size > 2 * 1024 * 1024) {
+    redirect("/cuenta?error=avatar_muy_grande");
+  }
+
+  const ext = file!.name.split(".").pop() || "jpg";
+  // Mismo nombre siempre (no uno por upload): reemplaza el anterior en
+  // vez de acumular archivos huérfanos en el bucket.
+  const path = `${user!.id}/avatar.${ext}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("avatars")
+    .upload(path, file!, { upsert: true });
+
+  if (uploadError) {
+    redirect("/cuenta?error=avatar_no_subido");
+  }
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("avatars").getPublicUrl(path);
+
+  // Cache-bust: el nombre de archivo no cambia entre subidas (mismo
+  // path con upsert), así que sin esto el navegador podría seguir
+  // mostrando la imagen vieja cacheada.
+  const avatarUrl = `${publicUrl}?v=${Date.now()}`;
+
+  const { error: updateError } = await supabase
+    .from("profiles")
+    .update({ avatar_url: avatarUrl })
+    .eq("id", user!.id);
+
+  if (updateError) {
+    redirect("/cuenta?error=avatar_no_guardado");
+  }
+
+  redirect("/cuenta?avatar_actualizado=1");
 }
 
 export async function changePassword(
