@@ -418,7 +418,7 @@ export default async function HomePage() {
         <div className="relative mx-auto flex max-w-6xl flex-col items-center gap-12 lg:flex-row">
           <div className="relative h-64 w-full max-w-md shrink-0 overflow-hidden rounded-2xl lg:h-80">
             <Image
-              src="/trabajosRealizados/profesional-en-obra.png"
+              src="/manitasunete.jfif"
               alt="Profesional de Manitas El Pana en obra"
               fill
               sizes="(max-width: 1024px) 100vw, 400px"
