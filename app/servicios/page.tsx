@@ -10,6 +10,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { UserMenu } from "@/components/user-menu";
+import { MobileNavMenu } from "@/components/mobile-nav-menu";
 import { SiteFooter } from "@/components/site-footer";
 import { catalog } from "@/lib/catalog";
 
@@ -63,21 +64,30 @@ export default async function ServiciosPage() {
             Nuestros manitas
           </Link>
         </nav>
-        {user ? (
-          <UserMenu
-            initial={initial ?? "U"}
-            avatarUrl={avatarUrl}
-            isManita={isManita}
-            isAdmin={isAdmin}
+        <div className="flex items-center gap-2">
+          {user ? (
+            <UserMenu
+              initial={initial ?? "U"}
+              avatarUrl={avatarUrl}
+              isManita={isManita}
+              isAdmin={isAdmin}
+            />
+          ) : (
+            <Link
+              href="/login"
+              className="rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-dark"
+            >
+              Iniciar sesión
+            </Link>
+          )}
+          <MobileNavMenu
+            links={[
+              { href: "/servicios", label: "Servicios", active: true },
+              { href: "/como-funciona", label: "Cómo funciona" },
+              { href: "/manitas", label: "Nuestros manitas" },
+            ]}
           />
-        ) : (
-          <Link
-            href="/login"
-            className="rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-dark"
-          >
-            Iniciar sesión
-          </Link>
-        )}
+        </div>
       </header>
 
       <section className="relative z-10 mx-auto max-w-5xl px-6 pb-24 pt-4 sm:pt-8">

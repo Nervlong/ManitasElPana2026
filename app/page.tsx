@@ -8,6 +8,7 @@ import Link from "next/link";
 import { CheckCircle2, MapPin, ShieldCheck } from "lucide-react";
 import { VideoTestimonial } from "@/components/video-testimonial";
 import { UserMenu } from "@/components/user-menu";
+import { MobileNavMenu } from "@/components/mobile-nav-menu";
 import { SiteFooter } from "@/components/site-footer";
 import { createClient } from "@/lib/supabase/server";
 import { catalog as mockCatalog } from "@/lib/catalog";
@@ -131,26 +132,35 @@ export default async function HomePage() {
             Nuestros manitas
           </Link>
         </nav>
-        {user ? (
-          <div className="flex items-center gap-3">
-            <span className="hidden text-sm font-medium text-content-secondary sm:block">
-              Hola, {firstName}
-            </span>
-            <UserMenu
-              initial={initial ?? "U"}
-              avatarUrl={avatarUrl}
-              isManita={isManita}
-              isAdmin={isAdmin}
-            />
-          </div>
-        ) : (
-          <Link
-            href="/login"
-            className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-hover"
-          >
-            Iniciar sesión
-          </Link>
-        )}
+        <div className="flex items-center gap-2">
+          {user ? (
+            <div className="flex items-center gap-3">
+              <span className="hidden text-sm font-medium text-content-secondary sm:block">
+                Hola, {firstName}
+              </span>
+              <UserMenu
+                initial={initial ?? "U"}
+                avatarUrl={avatarUrl}
+                isManita={isManita}
+                isAdmin={isAdmin}
+              />
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-hover"
+            >
+              Iniciar sesión
+            </Link>
+          )}
+          <MobileNavMenu
+            links={[
+              { href: "/servicios", label: "Servicios" },
+              { href: "/como-funciona", label: "Cómo funciona" },
+              { href: "/manitas", label: "Nuestros manitas" },
+            ]}
+          />
+        </div>
       </header>
 
       {/* ---- Hero: video full-bleed de fondo, texto alineado a la izquierda ---- */}
