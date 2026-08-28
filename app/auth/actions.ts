@@ -21,9 +21,17 @@ export async function signUp(
   const fullName = String(formData.get("fullName") ?? "");
   const wantsToBeManita = formData.get("role") === "manita";
 
+  // El checkbox del formulario es UX (deshabilita el botón) — esto es la
+  // garantía real: sin aceptar la política de privacidad, no se crea la
+  // cuenta, sin importar qué llegue en el POST.
+  const acceptedPrivacyPolicy = formData.get("acceptedPrivacyPolicy") === "on";
+  if (!acceptedPrivacyPolicy) {
+    return { error: "Tienes que aceptar la política de privacidad para crear una cuenta." };
+  }
+
   const supabase = await createClient();
 
-  const { data, error } = await supabase.auth.signUp({
+  const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -37,14 +45,13 @@ export async function signUp(
   }
 
   // El trigger de la base crea el perfil como "cliente" por defecto. Si
-  // el usuario eligió ser "manita", se crea una solicitud pendiente vía
-  // RPC — ya no cambia el rol automáticamente, un admin debe aprobarla
-  // (ver supabase/migrations/0006_manita_requests.sql).
-  if (wantsToBeManita && data.user) {
-    await supabase.rpc("become_manita");
-  }
-
-  redirect("/registro/revisa-tu-email");
+  // el usuario eligió ser "manita" en el selector de rol, NO se crea la
+  // solicitud automáticamente acá: become_manita() exige aceptar los
+  // términos de autónomo y un WhatsApp válido (0007/0015), datos que
+  // este formulario no pide. El paso real de pedir ser manita se hace
+  // después desde Mi cuenta, con esos datos completos — revisa-tu-email
+  // solo avisa que falta ese paso si eligió "manita" acá.
+  redirect(`/registro/revisa-tu-email${wantsToBeManita ? "?manita=1" : ""}`);
 }
 
 export async function signIn(

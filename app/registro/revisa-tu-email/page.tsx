@@ -2,7 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { Mail } from "lucide-react";
 
-export default function RevisaTuEmailPage() {
+interface RevisaTuEmailPageProps {
+  searchParams: Promise<{ manita?: string }>;
+}
+
+export default async function RevisaTuEmailPage({ searchParams }: RevisaTuEmailPageProps) {
+  const { manita } = await searchParams;
+
   return (
     <main className="flex min-h-screen flex-col bg-surface">
       <header className="mx-auto flex w-full max-w-5xl items-center px-6 py-3">
@@ -26,11 +32,20 @@ export default function RevisaTuEmailPage() {
             <Mail size={24} strokeWidth={2} />
           </span>
           <h1 className="text-lg font-semibold text-content-primary">
-            Revisá tu email
+            Revisa tu email
           </h1>
           <p className="text-sm text-content-secondary">
-            Te mandamos un link de confirmación. Abrilo para activar tu cuenta.
+            Te enviamos un link de confirmación. Ábrelo para activar tu cuenta.
           </p>
+          {manita === "1" && (
+            <p className="mt-1 rounded-md bg-brand-muted px-3 py-2 text-xs leading-relaxed text-content-secondary">
+              Tu cuenta se crea como cliente. Para solicitar pasar a manita,
+              confirma tu cuenta e ingresa a{" "}
+              <strong className="text-content-primary">Mi cuenta → Quiero ser manita</strong>{" "}
+              — ahí te pedimos tu WhatsApp y la aceptación de los términos de
+              autónomo.
+            </p>
+          )}
           <Link href="/" className="mt-2 text-sm font-medium text-brand hover:underline">
             Volver al inicio
           </Link>

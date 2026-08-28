@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CookieBanner } from "@/components/cookie-banner";
 import "./globals.css";
 
 // SITE_URL: usado para el canonical, Open Graph y sitemap.xml. En
@@ -50,7 +51,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className="dark">
-      <body>{children}</body>
+      <body>
+        {children}
+        <CookieBanner />
+      </body>
     </html>
   );
 }

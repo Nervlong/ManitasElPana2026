@@ -27,6 +27,15 @@ export async function uploadWorkPhoto(formData: FormData) {
     redirect("/seguridad?error=sin_foto");
   }
 
+  // El bucket ya rechaza otros tipos (allowed_mime_types en
+  // 0018_work_photos.sql) — esto es una capa extra: evita gastar el
+  // upload cuando el tipo ya se sabe inválido, y el atributo "accept"
+  // del <input> es solo una sugerencia de UI, no una garantía real.
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+  if (!allowedTypes.includes(file!.type)) {
+    redirect("/seguridad?error=tipo_no_permitido");
+  }
+
   if (file!.size > 5 * 1024 * 1024) {
     redirect("/seguridad?error=foto_muy_grande");
   }

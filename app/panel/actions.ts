@@ -3,9 +3,12 @@
 // -----------------------------------------------------------------------------
 // app/panel/actions.ts — Server Actions de la vista de manita en /panel:
 // tomar un trabajo pendiente y avanzar su estado. RLS en la tabla jobs
-// (0002_jobs.sql) ya exige que quien actualiza sea el pro_id del job o
-// esté tomando uno "pending" — estas acciones no necesitan chequear rol
-// a mano porque el motor SQL ya lo hace cumplir.
+// (0002_jobs.sql) exige pro_id = auth.uid() en la fila resultante, pero
+// el UPDATE en sí lo permite a CUALQUIER usuario autenticado sobre una
+// fila 'pending' — no chequea profiles.role. takeJob() re-valida acá que
+// quien llama sea manita o admin antes de tocar la tabla: sin esto, un
+// cliente podría auto-asignarse cualquier trabajo pendiente (hallazgo de
+// la auditoría de seguridad).
 // -----------------------------------------------------------------------------
 
 import { revalidatePath } from "next/cache";
@@ -27,6 +30,19 @@ export async function takeJob(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user!.id)
+    .single();
+
+  // Solo manita o admin (que también puede trabajar como manita, ver
+  // 0014_admin_active_manita.sql) pueden tomar un trabajo — un cliente
+  // no, aunque RLS técnicamente no lo bloquearía por sí solo.
+  if (profile?.role !== "manita" && profile?.role !== "admin") {
+    redirect("/panel");
+  }
 
   // RLS exige status = 'pending' en la fila que se está actualizando y
   // pro_id = auth.uid() en la fila resultante — si otro manita ya lo tomó

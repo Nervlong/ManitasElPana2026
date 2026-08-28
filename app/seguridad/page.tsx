@@ -33,6 +33,7 @@ interface SeguridadPageProps {
 
 const workPhotoErrors: Record<string, string> = {
   sin_foto: "Elige una imagen antes de subir.",
+  tipo_no_permitido: "Solo se permiten imágenes JPG, PNG o WebP.",
   foto_muy_grande: "La imagen no puede pesar más de 5 MB.",
   limite_fotos: "Ya tienes el máximo de 12 fotos. Borra alguna para subir otra.",
   foto_no_subida: "No pudimos subir la imagen. Prueba de nuevo.",
