@@ -167,7 +167,7 @@ export function ProfileForm({
           </>
         )}
 
-        {state.error && (
+        {state?.error && (
           <p className="rounded-md bg-status-danger/10 px-3 py-2 text-sm text-status-danger">
             {state.error}
           </p>

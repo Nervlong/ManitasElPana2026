@@ -103,7 +103,7 @@ export function ReviewForm({ jobId, proId, proName }: ReviewFormProps) {
         className="mt-4 w-full resize-none rounded-md border border-border-default bg-surface-sunken px-3 py-2.5 text-sm text-content-primary placeholder:text-content-tertiary focus:border-brand focus:outline-none"
       />
 
-      {state.error && (
+      {state?.error && (
         <p className="mt-3 rounded-md bg-status-danger/10 px-3 py-2 text-sm text-status-danger">
           {state.error}
         </p>
