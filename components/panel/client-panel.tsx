@@ -60,7 +60,7 @@ export function ClientPanel({ fullName, activeJob, jobToReview }: ClientPanelPro
           <p className="mt-1 text-sm text-content-secondary">
             {activeJob
               ? "Seguimiento de tu servicio activo."
-              : "No tenés ningún servicio activo en este momento."}
+              : "No tienes ningún servicio activo en este momento."}
           </p>
         </div>
       </header>
@@ -146,7 +146,7 @@ export function ClientPanel({ fullName, activeJob, jobToReview }: ClientPanelPro
           style={{ boxShadow: "var(--shadow-elevation-1)" }}
         >
           <p className="text-sm text-content-secondary">
-            Cuando pidas un servicio, vas a poder seguir acá su estado en
+            Cuando pidas un servicio, vas a poder seguir aquí su estado en
             tiempo real.
           </p>
         </div>

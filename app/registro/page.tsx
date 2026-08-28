@@ -14,7 +14,7 @@ export default function RegistroPage() {
     <AuthSplitLayout>
       <div className="space-y-2 text-center lg:text-left">
         <h1 className="text-2xl font-bold tracking-tight text-brand-dark">
-          Creá tu cuenta
+          Crea tu cuenta
         </h1>
         <p className="text-sm font-medium text-content-secondary">
           Como cliente para pedir servicios, o como manita para ofrecer tu
@@ -25,7 +25,7 @@ export default function RegistroPage() {
       <SignupForm />
 
       <p className="text-center text-sm text-content-tertiary">
-        ¿Ya tenés cuenta?{" "}
+        ¿Ya tienes cuenta?{" "}
         <Link href="/login" className="font-medium text-brand hover:underline">
           Iniciar sesión
         </Link>

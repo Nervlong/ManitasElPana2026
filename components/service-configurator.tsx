@@ -178,7 +178,7 @@ export function ServiceConfigurator() {
             {/* Paso 3 — Urgencia */}
             <div className="mb-6">
               <p className="mb-3 text-xs font-medium uppercase tracking-widest text-content-tertiary">
-                03 · ¿Cuándo lo necesitás?
+                03 · ¿Cuándo lo necesitas?
               </p>
               <div className="flex divide-x divide-border-subtle overflow-hidden rounded-md border border-border-subtle bg-surface-sunken">
                 {urgencyOptions.map((u) => {

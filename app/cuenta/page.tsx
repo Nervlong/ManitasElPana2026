@@ -12,21 +12,25 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
+  ArrowRight,
   Bell,
   Briefcase,
   CheckCircle2,
-  ChevronRight,
   Clock3,
   Hammer,
   HelpCircle,
+  ImagePlus,
   Mail,
   MapPin,
   ShieldCheck,
   UserCircle2,
+  Users,
+  Wrench,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { becomeManita, signOut } from "@/app/auth/actions";
+import { signOut } from "@/app/auth/actions";
 import { AppHeader } from "@/components/app-header";
+import { BecomeManitaForm } from "@/components/become-manita-form";
 import { ProfileForm } from "@/components/auth/profile-form";
 import { ChangePasswordForm } from "@/components/auth/change-password-form";
 
@@ -56,7 +60,14 @@ interface AccountCardProps {
 function AccountCard({ icon, title, description, href, badge, comingSoon }: AccountCardProps) {
   const content = (
     <>
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-brand transition-colors group-hover:bg-brand-muted">
+      <span
+        className={
+          "flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors" +
+          (href
+            ? " bg-surface-sunken text-brand group-hover:bg-brand group-hover:text-white"
+            : " bg-surface-sunken text-content-tertiary")
+        }
+      >
         {icon}
       </span>
       <div className="min-w-0 flex-1">
@@ -68,44 +79,57 @@ function AccountCard({ icon, title, description, href, badge, comingSoon }: Acco
             </span>
           )}
         </h3>
-        <p className="mt-1 text-xs leading-relaxed text-content-tertiary">
-          {comingSoon ? (
-            <>
-              {description} <span className="italic">Próximamente.</span>
-            </>
-          ) : (
-            description
-          )}
-        </p>
+        <p className="mt-1 text-xs leading-relaxed text-content-tertiary">{description}</p>
+        {comingSoon && (
+          <span className="mt-2 inline-block rounded-md bg-status-warning/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-status-warning">
+            Próximamente
+          </span>
+        )}
       </div>
+      {href && (
+        <ArrowRight className="h-4 w-4 shrink-0 -translate-x-1 text-brand opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100" />
+      )}
     </>
   );
 
   const className =
-    "group flex items-start gap-4 rounded-xl border border-border-default bg-surface-raised p-5 transition-colors" +
-    (href ? " hover:border-brand" : " opacity-70");
+    "group relative flex items-start gap-4 rounded-xl border border-border-default bg-surface-raised p-5 shadow-elevation-1 transition-all duration-200" +
+    (href ? " hover:border-brand/40 hover:-translate-y-0.5 hover:shadow-elevation-3" : " opacity-70");
 
   if (href) {
     return (
-      <Link href={href} className={className} style={{ boxShadow: "var(--shadow-elevation-1)" }}>
+      <Link href={href} className={className}>
         {content}
       </Link>
     );
   }
 
-  return (
-    <div className={className} style={{ boxShadow: "var(--shadow-elevation-1)" }}>
-      {content}
-    </div>
-  );
+  return <div className={className}>{content}</div>;
 }
 
 interface CuentaPageProps {
-  searchParams: Promise<{ actualizado?: string; password_actualizada?: string }>;
+  searchParams: Promise<{
+    actualizado?: string;
+    password_actualizada?: string;
+    solicitud_enviada?: string;
+    error?: string;
+  }>;
 }
 
+const becomeManitaErrors: Record<string, string> = {
+  debes_aceptar_terminos_autonomo:
+    "Tienes que marcar la casilla de aceptación para enviar la solicitud.",
+  solicitud_fallida: "No pudimos enviar la solicitud. Prueba de nuevo.",
+};
+
 export default async function CuentaPage({ searchParams }: CuentaPageProps) {
-  const { actualizado, password_actualizada: passwordActualizada } = await searchParams;
+  const {
+    actualizado,
+    password_actualizada: passwordActualizada,
+    solicitud_enviada: solicitudEnviada,
+    error,
+  } = await searchParams;
+  const becomeManitaError = error ? becomeManitaErrors[error] : undefined;
 
   const supabase = await createClient();
   const {
@@ -128,6 +152,7 @@ export default async function CuentaPage({ searchParams }: CuentaPageProps) {
   const role = profile?.role ?? "cliente";
   const isCliente = role === "cliente";
   const isManita = role === "manita";
+  const isAdmin = role === "admin";
   const canChangePassword = user.app_metadata?.provider === "email";
   const initial = fullName.charAt(0).toUpperCase();
 
@@ -138,9 +163,28 @@ export default async function CuentaPage({ searchParams }: CuentaPageProps) {
     .eq(activeJobsColumn, user.id)
     .not("status", "in", "(completed,cancelled)");
 
+  // Solicitud de "pasar a manita" más reciente del cliente (si existe),
+  // para saber si mostrar el botón, un estado "pendiente" o "rechazada".
+  let manitaRequestStatus: "pending" | "approved" | "rejected" | null = null;
+  if (isCliente) {
+    const { data: manitaRequest } = await supabase
+      .from("manita_requests")
+      .select("status")
+      .eq("client_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    manitaRequestStatus = manitaRequest?.status ?? null;
+  }
+
   return (
     <main className="min-h-screen bg-surface">
-      <AppHeader initial={initial} avatarUrl={profile?.avatar_url ?? null} isManita={isManita} />
+      <AppHeader
+        initial={initial}
+        avatarUrl={profile?.avatar_url ?? null}
+        isManita={isManita}
+        isAdmin={isAdmin}
+      />
 
       <div className="mx-auto max-w-5xl space-y-6 px-6 pb-24">
         {/* ---- Encabezado simple: nombre, rol, email ---- */}
@@ -166,14 +210,26 @@ export default async function CuentaPage({ searchParams }: CuentaPageProps) {
           </p>
         </div>
 
-        {(actualizado || passwordActualizada) && (
+        {(actualizado || passwordActualizada || solicitudEnviada) && (
           <div className="flex items-center gap-2 rounded-xl border border-status-success/20 bg-status-success/10 px-4 py-3 text-sm font-medium text-status-success">
             <CheckCircle2 className="h-4 w-4 shrink-0" />
-            {actualizado ? "Perfil actualizado correctamente." : "Contraseña actualizada correctamente."}
+            {actualizado
+              ? "Perfil actualizado correctamente."
+              : passwordActualizada
+                ? "Contraseña actualizada correctamente."
+                : "Solicitud enviada. Un admin la va a revisar pronto."}
           </div>
         )}
 
-        {/* ---- Grid denso de secciones, estilo Amazon ---- */}
+        {becomeManitaError && (
+          <div className="flex items-center gap-2 rounded-xl border border-status-danger/20 bg-status-danger/10 px-4 py-3 text-sm font-medium text-status-danger">
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            {becomeManitaError}
+          </div>
+        )}
+
+        {/* ---- Grid denso de secciones, estilo Amazon: comunes a todos + ---- */}
+        {/* específicas de manita o admin según el rol.                    ---- */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <AccountCard
             href="/panel"
@@ -181,7 +237,7 @@ export default async function CuentaPage({ searchParams }: CuentaPageProps) {
             title={isCliente ? "Mis trabajos" : "Mi agenda"}
             description={
               isCliente
-                ? "Rastreá tus servicios activos y su estado."
+                ? "Rastrea tus servicios activos y su estado."
                 : "Agenda del día e ingresos."
             }
             badge={activeJobsCount ?? 0}
@@ -194,12 +250,40 @@ export default async function CuentaPage({ searchParams }: CuentaPageProps) {
             description={`Editar el nombre${isManita ? ", la especialidad" : ""} y la contraseña.`}
           />
 
-          <AccountCard
-            icon={<MapPin className="h-5 w-5" />}
-            title="Direcciones"
-            description="Guardá direcciones frecuentes para pedir servicios más rápido."
-            comingSoon
-          />
+          {isManita && (
+            <>
+              <AccountCard
+                href={`/manitas/${user.id}`}
+                icon={<Wrench className="h-5 w-5" />}
+                title="Perfil público"
+                description="Así te ven los clientes: especialidad, reputación y reseñas."
+              />
+              <AccountCard
+                icon={<ImagePlus className="h-5 w-5" />}
+                title="Fotos de trabajos"
+                description="Sube fotos de tus trabajos para mostrar en tu perfil público."
+                comingSoon
+              />
+            </>
+          )}
+
+          {isAdmin && (
+            <AccountCard
+              href="/admin"
+              icon={<Users className="h-5 w-5" />}
+              title="Panel de administración"
+              description="Solicitudes de manita, usuarios y todos los trabajos."
+            />
+          )}
+
+          {isCliente && (
+            <AccountCard
+              icon={<MapPin className="h-5 w-5" />}
+              title="Direcciones"
+              description="Guarda direcciones frecuentes para pedir servicios más rápido."
+              comingSoon
+            />
+          )}
 
           <AccountCard
             icon={<Bell className="h-5 w-5" />}
@@ -223,7 +307,7 @@ export default async function CuentaPage({ searchParams }: CuentaPageProps) {
           />
         </div>
 
-        {/* ---- Upsell: pasar a manita ---- */}
+        {/* ---- Upsell: pasar a manita (según estado real de la solicitud) ---- */}
         {isCliente && (
           <div
             className="relative flex flex-col items-center gap-6 overflow-hidden rounded-2xl bg-brand-dark p-6 sm:flex-row sm:justify-between sm:p-8"
@@ -237,25 +321,25 @@ export default async function CuentaPage({ searchParams }: CuentaPageProps) {
               </span>
               <div>
                 <h3 className="text-base font-semibold text-white">
-                  ¿Querés ofrecer tus servicios?
+                  ¿Quieres ofrecer tus servicios?
                 </h3>
                 <p className="mt-1 max-w-sm text-sm text-white/70">
-                  Pasá a ser manita de la red, recibí trabajos cualificados en
-                  tu zona y aumentá tus ingresos.
+                  {manitaRequestStatus === "pending"
+                    ? "Tu solicitud está pendiente de revisión por un admin."
+                    : manitaRequestStatus === "rejected"
+                      ? "Tu solicitud anterior no fue aprobada. Puedes volver a intentarlo."
+                      : "Pasa a ser manita de la red, recibe trabajos cualificados en tu zona y aumenta tus ingresos."}
                 </p>
               </div>
             </div>
 
-            <form action={becomeManita} className="relative z-10 w-full sm:w-auto">
-              <button
-                type="submit"
-                className="flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-accent-contrast transition-colors hover:bg-accent-hover sm:w-auto"
-                style={{ boxShadow: "var(--shadow-glow-accent)" }}
-              >
-                Quiero ser manita
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </form>
+            {manitaRequestStatus === "pending" ? (
+              <span className="relative z-10 whitespace-nowrap rounded-xl border border-white/20 bg-white/10 px-6 py-3 text-sm font-semibold text-white/80">
+                Pendiente de revisión
+              </span>
+            ) : (
+              <BecomeManitaForm isRejected={manitaRequestStatus === "rejected"} />
+            )}
           </div>
         )}
 

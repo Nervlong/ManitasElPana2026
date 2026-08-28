@@ -21,6 +21,7 @@ export default async function PresupuestoPage() {
   let initial: string | null = null;
   let avatarUrl: string | null = null;
   let isManita = false;
+  let isAdmin = false;
 
   if (user) {
     const { data: profile } = await supabase
@@ -31,13 +32,19 @@ export default async function PresupuestoPage() {
 
     avatarUrl = profile?.avatar_url ?? null;
     isManita = profile?.role === "manita";
+    isAdmin = profile?.role === "admin";
     initial = (profile?.full_name || user.email || "U").charAt(0).toUpperCase();
   }
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-surface">
       {user ? (
-        <AppHeader initial={initial ?? "U"} avatarUrl={avatarUrl} isManita={isManita} />
+        <AppHeader
+          initial={initial ?? "U"}
+          avatarUrl={avatarUrl}
+          isManita={isManita}
+          isAdmin={isAdmin}
+        />
       ) : (
         <header className="relative z-20 mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
           <Link href="/" className="relative -mb-10 flex items-center sm:-mb-14">
@@ -71,10 +78,10 @@ export default async function PresupuestoPage() {
               Presupuesto
             </p>
             <h1 className="mt-2 text-3xl font-semibold tracking-tight text-brand-dark sm:text-4xl">
-              Contanos qué necesitás
+              Cuéntanos qué necesitas
             </h1>
             <p className="mx-auto mt-3 max-w-md text-balance text-base text-content-secondary">
-              Completá tus datos y te contactamos para confirmar el
+              Completa tus datos y te contactamos para confirmar el
               presupuesto y coordinar la visita del profesional.
             </p>
           </div>

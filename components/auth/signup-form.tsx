@@ -44,7 +44,7 @@ export function SignupForm() {
     <div className="flex flex-col gap-5">
       <GoogleSignInButton />
       <p className="-mt-2 text-center text-xs text-content-tertiary">
-        Con Google te registrás como cliente. Podés pedir ser manita después.
+        Con Google te registras como cliente. Puedes pedir ser manita después.
       </p>
 
       <div className="flex items-center gap-3">

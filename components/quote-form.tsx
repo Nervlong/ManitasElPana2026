@@ -197,7 +197,7 @@ export function QuoteForm() {
           id="qf-detalles"
           name="detalles"
           rows={3}
-          placeholder="Contanos qué necesitás resolver…"
+          placeholder="Cuéntanos qué necesitas resolver…"
           className="w-full resize-none rounded-md border border-border-default bg-surface-sunken px-3 py-2.5 text-sm text-content-primary placeholder:text-content-tertiary focus:border-brand focus:outline-none"
         />
       </div>

@@ -1,11 +1,21 @@
 // -----------------------------------------------------------------------------
-// ProPanel — vista del manita (profesional): agenda del día + métricas.
-// Recibe la agenda real (jobs) ya resuelta por app/panel/page.tsx.
-// Server Component: sin interactividad más allá de los botones de acción,
-// que hoy no hacen nada, quedan como placeholder de UI.
+// ProPanel — vista del manita (profesional): trabajos disponibles para
+// tomar + agenda del día + métricas. Recibe los datos reales (jobs) ya
+// resueltos por app/panel/page.tsx. Server Component: tomar un trabajo y
+// avanzar su estado son Server Actions (app/panel/actions.ts).
 // -----------------------------------------------------------------------------
 
-import { CalendarClock, CheckCircle2, Clock, MapPin, Navigation, Star, Wallet } from "lucide-react";
+import {
+  CalendarClock,
+  CheckCircle2,
+  Clock,
+  ListChecks,
+  MapPin,
+  Navigation,
+  Star,
+  Wallet,
+} from "lucide-react";
+import { advanceJobStatus, takeJob } from "@/app/panel/actions";
 
 function formatEUR(value: number): string {
   return new Intl.NumberFormat("es-ES", {
@@ -32,9 +42,19 @@ interface AgendaJob {
   status: string;
 }
 
+interface AvailableJob {
+  id: string;
+  client_full_name: string | null;
+  service_type: string;
+  address: string | null;
+  scheduled_at: string;
+  price: number;
+}
+
 interface ProPanelProps {
   fullName: string;
   agenda: AgendaJob[];
+  available: AvailableJob[];
   completedTodayCount: number;
   revenueToday: number;
   averageRating: number | null;
@@ -44,6 +64,7 @@ interface ProPanelProps {
 export function ProPanel({
   fullName,
   agenda,
+  available,
   completedTodayCount,
   revenueToday,
   averageRating,
@@ -59,8 +80,8 @@ export function ProPanel({
           <p className="mt-1 text-sm text-content-secondary">
             Buen día, {fullName}.{" "}
             {agenda.length > 0
-              ? `Tenés ${agenda.length} servicio${agenda.length === 1 ? "" : "s"} programado${agenda.length === 1 ? "" : "s"}.`
-              : "No tenés servicios programados por ahora."}
+              ? `Tienes ${agenda.length} servicio${agenda.length === 1 ? "" : "s"} programado${agenda.length === 1 ? "" : "s"}.`
+              : "No tienes servicios programados por ahora."}
           </p>
         </div>
         <span className="flex items-center gap-2 rounded-lg border border-status-success/20 bg-status-success/10 px-3 py-1.5 text-xs font-bold text-status-success">
@@ -124,6 +145,60 @@ export function ProPanel({
         </div>
       </div>
 
+      {/* ---- Trabajos disponibles: pendientes sin asignar, cualquier
+           manita puede tomarlos (primero en llegar, primero en tomarlo) ---- */}
+      {available.length > 0 && (
+        <div
+          className="overflow-hidden rounded-2xl border border-border-default bg-surface-raised"
+          style={{ boxShadow: "var(--shadow-elevation-2)" }}
+        >
+          <div className="border-b border-border-default bg-surface-sunken p-6">
+            <h3 className="flex items-center gap-2 text-sm font-bold tracking-tight text-brand-dark">
+              <ListChecks className="h-4 w-4" />
+              Trabajos disponibles
+            </h3>
+          </div>
+          <div className="divide-y divide-border-subtle">
+            {available.map((job) => (
+              <div
+                key={job.id}
+                className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="flex-1">
+                  <h4 className="text-base font-bold text-brand-dark">{job.service_type}</h4>
+                  <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-content-tertiary">
+                    <span className="flex items-center gap-1 font-medium text-content-primary">
+                      <Clock className="h-4 w-4 text-brand" />
+                      {formatTime(job.scheduled_at)}
+                    </span>
+                    {job.address && (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-4 w-4" />
+                        {job.address}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border-subtle pt-4 sm:flex-col sm:items-end sm:border-t-0 sm:pt-0">
+                  <span className="tabular-nums font-mono text-lg font-semibold text-brand-dark">
+                    {formatEUR(job.price)}
+                  </span>
+                  <form action={takeJob}>
+                    <input type="hidden" name="jobId" value={job.id} />
+                    <button
+                      type="submit"
+                      className="flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-accent-contrast transition-colors hover:bg-accent-hover"
+                    >
+                      Tomar trabajo
+                    </button>
+                  </form>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ---- Agenda del día ---- */}
       <div
         className="overflow-hidden rounded-2xl border border-border-default bg-surface-raised"
@@ -138,7 +213,7 @@ export function ProPanel({
 
         {agenda.length === 0 ? (
           <p className="p-8 text-center text-sm text-content-secondary">
-            Cuando aceptes o te asignen un trabajo, va a aparecer acá.
+            Cuando aceptes o te asignen un trabajo, va a aparecer aquí.
           </p>
         ) : (
           <div className="divide-y divide-border-subtle">
@@ -180,23 +255,32 @@ export function ProPanel({
                     <span className="tabular-nums font-mono text-lg font-semibold text-brand-dark">
                       {formatEUR(job.price)}
                     </span>
-                    <button
-                      type="button"
-                      className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-colors ${
-                        isNext
-                          ? "bg-brand text-white hover:bg-brand-hover"
-                          : "border border-border-default bg-surface-sunken text-brand-dark hover:border-brand"
-                      }`}
-                    >
-                      {isNext ? (
-                        <>
-                          <Navigation className="h-4 w-4" />
-                          Iniciar navegación
-                        </>
-                      ) : (
-                        "Ver detalles"
-                      )}
-                    </button>
+                    <form action={advanceJobStatus}>
+                      <input type="hidden" name="jobId" value={job.id} />
+                      <input type="hidden" name="currentStatus" value={job.status} />
+                      <button
+                        type="submit"
+                        className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-colors ${
+                          isNext
+                            ? "bg-brand text-white hover:bg-brand-hover"
+                            : "border border-border-default bg-surface-sunken text-brand-dark hover:border-brand"
+                        }`}
+                      >
+                        {job.status === "assigned" && (
+                          <>
+                            <Navigation className="h-4 w-4" />
+                            Salir hacia el trabajo
+                          </>
+                        )}
+                        {job.status === "in_transit" && "Marcar en curso"}
+                        {job.status === "in_progress" && (
+                          <>
+                            <CheckCircle2 className="h-4 w-4" />
+                            Marcar completado
+                          </>
+                        )}
+                      </button>
+                    </form>
                   </div>
                 </div>
               );

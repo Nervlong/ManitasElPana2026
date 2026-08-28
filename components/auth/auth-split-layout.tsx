@@ -55,11 +55,11 @@ export function AuthSplitLayout({ children }: AuthSplitLayoutProps) {
 
         <div className="relative z-10 max-w-md">
           <h2 className="mb-4 text-3xl font-bold leading-tight tracking-tight text-white">
-            El profesional que necesitás, en tu puerta hoy.
+            El profesional que necesitas, en tu puerta hoy.
           </h2>
           <p className="mb-8 text-sm font-medium leading-relaxed text-white/70">
-            Pedí un servicio como cliente, o sumate como manita para recibir
-            trabajos cerca tuyo.
+            Pide un servicio como cliente, o únete como manita para recibir
+            trabajos cerca de ti.
           </p>
 
           <div className="space-y-5">

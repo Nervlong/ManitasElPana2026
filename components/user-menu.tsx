@@ -9,16 +9,17 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Briefcase, LogOut, UserCircle2 } from "lucide-react";
+import { Briefcase, LogOut, ShieldCheck, UserCircle2 } from "lucide-react";
 import { signOut } from "@/app/auth/actions";
 
 interface UserMenuProps {
   initial: string;
   avatarUrl: string | null;
   isManita: boolean;
+  isAdmin?: boolean;
 }
 
-export function UserMenu({ initial, avatarUrl, isManita }: UserMenuProps) {
+export function UserMenu({ initial, avatarUrl, isManita, isAdmin }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -73,6 +74,17 @@ export function UserMenu({ initial, avatarUrl, isManita }: UserMenuProps) {
             <UserCircle2 className="h-4 w-4 text-content-tertiary" />
             Mi cuenta
           </Link>
+          {isAdmin && (
+            <Link
+              href="/admin"
+              role="menuitem"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-2.5 px-4 py-3 text-sm font-medium text-content-primary transition-colors hover:bg-surface-sunken"
+            >
+              <ShieldCheck className="h-4 w-4 text-content-tertiary" />
+              Panel de administración
+            </Link>
+          )}
           <div className="border-t border-border-subtle">
             <form action={signOut}>
               <button

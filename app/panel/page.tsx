@@ -1,18 +1,28 @@
 // -----------------------------------------------------------------------------
 // app/panel/page.tsx — Panel autenticado: separa vista cliente / manita
-// según profiles.role (nunca un toggle manual — el rol real decide).
+// según profiles.role. El rol "admin" no es ni cliente ni manita, pero
+// puede trabajar como manita además de gestionar la plataforma desde
+// /admin — así que ve un toggle para elegir qué vista mirar (?vista=manita
+// en la URL, sin estado de cliente ni pestañas ocultas: es un link normal,
+// server-rendered). Un cliente o manita normal no ve el toggle ni puede
+// forzar la otra vista por URL (se ignora si su rol no la habilita).
 // Trae datos reales de la tabla `jobs` (ver supabase/migrations/0002_jobs.sql).
-// El rol "admin" cae al panel de cliente por ahora (no hay panel de admin
-// todavía); ver TODO abajo.
 // -----------------------------------------------------------------------------
 
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppHeader } from "@/components/app-header";
 import { ClientPanel } from "@/components/panel/client-panel";
 import { ProPanel } from "@/components/panel/pro-panel";
 
-export default async function PanelPage() {
+interface PanelPageProps {
+  searchParams: Promise<{ vista?: string }>;
+}
+
+export default async function PanelPage({ searchParams }: PanelPageProps) {
+  const { vista } = await searchParams;
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -30,17 +40,52 @@ export default async function PanelPage() {
 
   const fullName = profile?.full_name || user.email?.split("@")[0] || "usuario";
   const isManita = profile?.role === "manita";
+  const isAdmin = profile?.role === "admin";
   const initial = (profile?.full_name || user.email || "U").charAt(0).toUpperCase();
 
-  // TODO: cuando exista un panel de admin dedicado, separar ese caso acá
-  // (hoy role === "admin" ve el panel de cliente por defecto).
+  // Un admin puede ver la vista de manita para tomar/hacer trabajos, pero
+  // por defecto ve la de cliente (mismo comportamiento de siempre). Un
+  // manita real siempre ve su vista, sin importar el query param.
+  const showProView = isManita || (isAdmin && vista === "manita");
 
   return (
     <main className="min-h-screen bg-surface">
-      <AppHeader initial={initial} avatarUrl={profile?.avatar_url ?? null} isManita={isManita} />
+      <AppHeader
+        initial={initial}
+        avatarUrl={profile?.avatar_url ?? null}
+        isManita={isManita}
+        isAdmin={isAdmin}
+      />
 
       <div className="px-6 pb-24 pt-6">
-        {isManita ? (
+        {isAdmin && (
+          <div className="mx-auto mb-6 flex max-w-4xl gap-2">
+            <Link
+              href="/panel"
+              className={
+                "rounded-md px-4 py-2 text-sm font-semibold transition-colors " +
+                (!showProView
+                  ? "bg-brand-dark text-white"
+                  : "border border-border-default bg-surface-raised text-content-secondary hover:text-content-primary")
+              }
+            >
+              Vista cliente
+            </Link>
+            <Link
+              href="/panel?vista=manita"
+              className={
+                "rounded-md px-4 py-2 text-sm font-semibold transition-colors " +
+                (showProView
+                  ? "bg-brand-dark text-white"
+                  : "border border-border-default bg-surface-raised text-content-secondary hover:text-content-primary")
+              }
+            >
+              Vista manita
+            </Link>
+          </div>
+        )}
+
+        {showProView ? (
           <ProDataFetcher userId={user.id} fullName={fullName} />
         ) : (
           <ClientDataFetcher userId={user.id} fullName={fullName} />
@@ -83,9 +128,10 @@ async function ClientDataFetcher({
         status: data.status,
         price: Number(data.price),
         address: data.address,
-        pro_full_name: (data.pro as { full_name: string | null } | null)?.full_name ?? null,
+        pro_full_name:
+          (data.pro as unknown as { full_name: string | null } | null)?.full_name ?? null,
         pro_is_verified:
-          (data.pro as { is_verified: boolean } | null)?.is_verified ?? false,
+          (data.pro as unknown as { is_verified: boolean } | null)?.is_verified ?? false,
       }
     : null;
 
@@ -111,7 +157,8 @@ async function ClientDataFetcher({
         id: pendingReviewJob.id,
         proId: pendingReviewJob.pro_id as string,
         proName:
-          (pendingReviewJob.pro as { full_name: string | null } | null)?.full_name ?? "el profesional",
+          (pendingReviewJob.pro as unknown as { full_name: string | null } | null)?.full_name ??
+          "el profesional",
       }
     : null;
 
@@ -130,7 +177,7 @@ async function ProDataFetcher({
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
 
-  const [{ data: agendaData }, { data: completedTodayData }, { data: reviewsData }] =
+  const [{ data: agendaData }, { data: completedTodayData }, { data: reviewsData }, { data: availableData }] =
     await Promise.all([
       supabase
         .from("jobs")
@@ -147,17 +194,37 @@ async function ProDataFetcher({
         .eq("status", "completed")
         .gte("created_at", startOfToday.toISOString()),
       supabase.from("reviews").select("rating").eq("pro_id", userId),
+      // Trabajos sin asignar que cualquier manita puede tomar (RLS ya
+      // limita esto a status='pending', ver 0002_jobs.sql).
+      supabase
+        .from("jobs")
+        .select(
+          "id, service_type, address, scheduled_at, price, client:profiles!jobs_client_id_fkey(full_name)"
+        )
+        .eq("status", "pending")
+        .order("scheduled_at", { ascending: true })
+        .limit(10),
     ]);
 
   const agenda = (agendaData ?? []).map((job) => ({
     id: job.id,
     client_full_name:
-      (job.client as { full_name: string | null } | null)?.full_name ?? null,
+      (job.client as unknown as { full_name: string | null } | null)?.full_name ?? null,
     service_type: job.service_type,
     address: job.address,
     scheduled_at: job.scheduled_at,
     price: Number(job.price),
     status: job.status,
+  }));
+
+  const available = (availableData ?? []).map((job) => ({
+    id: job.id,
+    client_full_name:
+      (job.client as unknown as { full_name: string | null } | null)?.full_name ?? null,
+    service_type: job.service_type,
+    address: job.address,
+    scheduled_at: job.scheduled_at,
+    price: Number(job.price),
   }));
 
   const completedTodayCount = completedTodayData?.length ?? 0;
@@ -175,6 +242,7 @@ async function ProDataFetcher({
     <ProPanel
       fullName={fullName}
       agenda={agenda}
+      available={available}
       completedTodayCount={completedTodayCount}
       revenueToday={revenueToday}
       averageRating={averageRating}

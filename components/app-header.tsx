@@ -15,22 +15,23 @@ interface AppHeaderProps {
   initial: string;
   avatarUrl: string | null;
   isManita: boolean;
+  isAdmin?: boolean;
 }
 
-export function AppHeader({ initial, avatarUrl, isManita }: AppHeaderProps) {
+export function AppHeader({ initial, avatarUrl, isManita, isAdmin }: AppHeaderProps) {
   return (
     <header className="relative z-20 mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
-      <Link href="/" className="relative -mb-10 flex items-center sm:-mb-14">
+      <Link href="/" className="relative flex items-center">
         <Image
           src="/brand/logo.png"
           alt="Manitas El Pana"
           width={200}
           height={188}
           priority
-          className="h-24 w-auto drop-shadow-lg sm:h-32"
+          className="h-14 w-auto drop-shadow-lg sm:h-16"
         />
       </Link>
-      <UserMenu initial={initial} avatarUrl={avatarUrl} isManita={isManita} />
+      <UserMenu initial={initial} avatarUrl={avatarUrl} isManita={isManita} isAdmin={isAdmin} />
     </header>
   );
 }

@@ -8,48 +8,26 @@ import Link from "next/link";
 import { CheckCircle2, MapPin, ShieldCheck } from "lucide-react";
 import { VideoTestimonial } from "@/components/video-testimonial";
 import { UserMenu } from "@/components/user-menu";
+import { SiteFooter } from "@/components/site-footer";
 import { createClient } from "@/lib/supabase/server";
+import { catalog as mockCatalog } from "@/lib/catalog";
 
-// ---- mockData: catálogo y prueba social ------------------------------------
-const mockCatalog = [
+// ---- mockData: proceso y prueba social --------------------------------------
+const howItWorksSteps = [
   {
-    id: "montaje-ikea",
-    title: "Montaje de muebles",
-    description: "IKEA, Kave Home o cualquier mueble en kit. Herramienta propia incluida.",
-    image:
-      "https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=800&auto=format&fit=crop",
-    tag: "Más pedido",
+    title: "Pides tu presupuesto",
+    description:
+      "Eliges el servicio, describes el trabajo y dejas tu dirección. Te llega una estimación al instante.",
   },
   {
-    id: "electricidad",
-    title: "Electricidad",
-    description: "Instalación de enchufes, lámparas, cuadros eléctricos certificados.",
-    image:
-      "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=800&auto=format&fit=crop",
-    tag: "Certificado",
+    title: "Un manita coordina contigo",
+    description:
+      "Un profesional disponible en tu zona revisa la solicitud y coordina el precio final y el horario.",
   },
   {
-    id: "remodelacion",
-    title: "Remodelación",
-    description: "Reformas menores, reparación de paredes y acabados en obra.",
-    image: "/trabajosRealizados/reforma-cocina-pared.jpeg",
-    tag: "Reformas",
-  },
-  {
-    id: "pintura",
-    title: "Pintura",
-    description: "Interiores, exteriores y retoques rápidos con acabado profesional.",
-    image:
-      "https://images.unsplash.com/photo-1562259949-e8e7689d7828?q=80&w=800&auto=format&fit=crop",
-    tag: "Acabados",
-  },
-  {
-    id: "fontaneria",
-    title: "Fontanería",
-    description: "Fugas, grifería, cisternas y reparaciones urgentes 24/7.",
-    image:
-      "https://images.unsplash.com/photo-1585704032915-c3400ca199e7?q=80&w=800&auto=format&fit=crop",
-    tag: "Urgencias",
+    title: "Trabajo, pago y calificación",
+    description:
+      "El manita hace el trabajo, le pagas en efectivo al terminar y puedes dejar tu calificación desde Mi cuenta.",
   },
 ];
 
@@ -110,6 +88,7 @@ export default async function HomePage() {
   let initial: string | null = null;
   let avatarUrl: string | null = null;
   let isManita = false;
+  let isAdmin = false;
 
   if (user) {
     const { data: profile } = await supabase
@@ -120,6 +99,7 @@ export default async function HomePage() {
 
     avatarUrl = profile?.avatar_url ?? null;
     isManita = profile?.role === "manita";
+    isAdmin = profile?.role === "admin";
     const nameForInitial = profile?.full_name || user.email || "U";
     initial = nameForInitial.charAt(0).toUpperCase();
   }
@@ -145,12 +125,20 @@ export default async function HomePage() {
           <a href="#como-funciona" className="transition-colors hover:text-brand">
             Cómo funciona
           </a>
+          <Link href="/manitas" className="transition-colors hover:text-brand">
+            Nuestros manitas
+          </Link>
           <Link href="/registro" className="transition-colors hover:text-brand">
             Únete como profesional
           </Link>
         </nav>
         {user ? (
-          <UserMenu initial={initial ?? "U"} avatarUrl={avatarUrl} isManita={isManita} />
+          <UserMenu
+            initial={initial ?? "U"}
+            avatarUrl={avatarUrl}
+            isManita={isManita}
+            isAdmin={isAdmin}
+          />
         ) : (
           <Link
             href="/login"
@@ -232,13 +220,53 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ---- Cómo funciona: 3 pasos del flujo real, resumen con link a /como-funciona ---- */}
+      <section id="como-funciona" className="relative z-10 overflow-hidden bg-surface px-6 py-24">
+        <div className="relative mx-auto max-w-6xl">
+          <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-accent">
+                Proceso
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-brand-dark sm:text-3xl">
+                Cómo funciona
+              </h2>
+            </div>
+            <Link
+              href="/como-funciona"
+              className="text-sm font-semibold text-brand transition-colors hover:text-brand-dark"
+            >
+              Ver el detalle completo →
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {howItWorksSteps.map((step, index) => (
+              <div
+                key={step.title}
+                className="rounded-lg border border-border-default bg-surface-raised p-6"
+                style={{ boxShadow: "var(--shadow-elevation-1)" }}
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-dark text-sm font-bold text-white">
+                  {index + 1}
+                </span>
+                <h3 className="mt-4 text-sm font-semibold text-content-primary">{step.title}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-content-tertiary">
+                  {step.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ---- Catálogo (Bento): fondo azul claro con glows + grid, cards blancas flotando ---- */}
       <section id="servicios" className="relative z-10 overflow-hidden border-y border-border-subtle bg-surface-tint-blue px-6 py-24">
         <div className="pointer-events-none absolute inset-0 bg-grid opacity-30 [mask-image:radial-gradient(ellipse_70%_60%_at_50%_0%,black,transparent)]" />
         <div className="pointer-events-none absolute left-[-8%] top-[20%] h-[320px] w-[320px] rounded-full bg-brand/10 blur-[120px]" />
         <div className="pointer-events-none absolute right-[-8%] bottom-[10%] h-[280px] w-[280px] rounded-full bg-accent/10 blur-[110px]" />
         <div className="relative mx-auto max-w-6xl">
-          <div className="mb-10 flex items-end justify-between">
+          <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-accent">
                 Catálogo
@@ -247,6 +275,12 @@ export default async function HomePage() {
                 Servicios bajo demanda
               </h2>
             </div>
+            <Link
+              href="/servicios"
+              className="text-sm font-semibold text-brand transition-colors hover:text-brand-dark"
+            >
+              Ver todos los servicios →
+            </Link>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -383,21 +417,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ---- Footer: gradiente azul marino, glow naranja tenue, simetría con el hero ---- */}
-      <footer className="relative z-10 overflow-hidden bg-gradient-to-t from-brand-dark via-brand-dark to-brand">
-        <div className="pointer-events-none absolute left-1/2 top-0 h-[200px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/15 blur-[110px]" />
-        <div className="relative mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-8 text-xs text-white/50 sm:flex-row">
-          <span>© 2026 Manitas El Pana. Todos los derechos reservados.</span>
-          <div className="flex gap-6">
-            <a href="#" className="transition-colors hover:text-white">
-              Términos
-            </a>
-            <a href="#" className="transition-colors hover:text-white">
-              Privacidad
-            </a>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

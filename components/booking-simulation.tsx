@@ -62,7 +62,7 @@ export function BookingSimulation({ serviceLabel, duration }: BookingSimulationP
               <Search size={24} className="animate-pulse" strokeWidth={2} />
             </span>
             <p className="text-sm font-semibold text-content-primary">
-              Buscando profesionales de {serviceLabel.toLowerCase()} cerca tuyo…
+              Buscando profesionales de {serviceLabel.toLowerCase()} cerca de ti…
             </p>
             <p className="text-xs text-content-tertiary">Esto suele tardar unos segundos</p>
           </motion.div>

@@ -37,10 +37,9 @@ export async function signUp(
   }
 
   // El trigger de la base crea el perfil como "cliente" por defecto. Si
-  // el usuario eligió ser "manita", lo pasamos vía RPC — la policy de
-  // UPDATE en profiles bloquea a propósito el cambio de rol directo
-  // (ver become_manita() en supabase/migrations/0003_become_manita.sql),
-  // así que nunca se autoasigna un rol por un update crudo acá.
+  // el usuario eligió ser "manita", se crea una solicitud pendiente vía
+  // RPC — ya no cambia el rol automáticamente, un admin debe aprobarla
+  // (ver supabase/migrations/0006_manita_requests.sql).
   if (wantsToBeManita && data.user) {
     await supabase.rpc("become_manita");
   }
@@ -56,10 +55,26 @@ export async function signIn(
   const password = String(formData.get("password") ?? "");
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error, data } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     return { error: "Email o contraseña incorrectos" };
+  }
+
+  // Cuenta suspendida por un admin (0008_admin_management.sql): se
+  // desloguea de inmediato y no llega al panel. No borra ni oculta sus
+  // datos, solo bloquea el acceso.
+  if (data.user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("suspended_at")
+      .eq("id", data.user.id)
+      .single();
+
+    if (profile?.suspended_at) {
+      await supabase.auth.signOut();
+      return { error: "Esta cuenta está suspendida. Contacta con soporte si crees que es un error." };
+    }
   }
 
   redirect("/panel");
@@ -71,7 +86,7 @@ export async function signOut() {
   redirect("/");
 }
 
-export async function becomeManita() {
+export async function becomeManita(formData: FormData) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -81,13 +96,50 @@ export async function becomeManita() {
     redirect("/login");
   }
 
-  // Pasa de "cliente" a "manita" vía RPC — la policy de UPDATE en
-  // profiles bloquea a propósito el cambio de rol directo, así que esta
-  // función SQL (security definer) es la única puerta habilitada, y sólo
-  // permite ese sentido específico (nunca hacia "admin").
-  await supabase.rpc("become_manita");
+  const acceptedAutonomoTerms = formData.get("acceptedAutonomoTerms") === "on";
+  if (!acceptedAutonomoTerms) {
+    redirect("/cuenta?error=debes_aceptar_terminos_autonomo");
+  }
 
-  redirect("/panel");
+  // Ya NO cambia el rol automáticamente: crea una solicitud pendiente
+  // que un admin debe aprobar (review_manita_request). El rol sigue
+  // siendo "cliente" hasta que eso pase — ver
+  // supabase/migrations/0006_manita_requests.sql. El índice único evita
+  // duplicar la solicitud si ya hay una pendiente (se ignora el error).
+  //
+  // El RPC exige accept_autonomo_terms=true y lo graba con fecha en la
+  // fila (supabase/migrations/0007_manita_autonomo_acceptance.sql) — no
+  // es solo un checkbox de UI, queda como evidencia de que el manita
+  // confirmó que opera como profesional autónomo independiente, no como
+  // empleado de la plataforma.
+  const { error } = await supabase.rpc("become_manita", {
+    accept_autonomo_terms: true,
+  });
+
+  if (error) {
+    redirect("/cuenta?error=solicitud_fallida");
+  }
+
+  redirect("/cuenta?solicitud_enviada=1");
+}
+
+export async function reviewManitaRequest(formData: FormData) {
+  const requestId = String(formData.get("requestId") ?? "");
+  const approve = formData.get("approve") === "true";
+
+  if (!requestId) {
+    redirect("/admin");
+  }
+
+  const supabase = await createClient();
+  // review_manita_request() valida internamente que quien llama sea
+  // admin — si no lo es, la función lanza una excepción y el RPC falla.
+  await supabase.rpc("review_manita_request", {
+    request_id: requestId,
+    approve,
+  });
+
+  redirect("/admin?revisado=1");
 }
 
 export async function updateProfile(

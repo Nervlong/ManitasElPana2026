@@ -16,14 +16,14 @@ export default function LoginPage() {
           Iniciar sesión
         </h1>
         <p className="text-sm font-medium text-content-secondary">
-          Entrá a tu cuenta de cliente o manita.
+          Entra a tu cuenta de cliente o manita.
         </p>
       </div>
 
       <LoginForm />
 
       <p className="text-center text-sm text-content-tertiary">
-        ¿No tenés cuenta?{" "}
+        ¿No tienes cuenta?{" "}
         <Link href="/registro" className="font-medium text-brand hover:underline">
           Crear cuenta
         </Link>

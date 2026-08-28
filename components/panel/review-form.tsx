@@ -99,7 +99,7 @@ export function ReviewForm({ jobId, proId, proName }: ReviewFormProps) {
       <textarea
         name="comment"
         rows={3}
-        placeholder="Contanos cómo fue tu experiencia (opcional)…"
+        placeholder="Cuéntanos cómo fue tu experiencia (opcional)…"
         className="mt-4 w-full resize-none rounded-md border border-border-default bg-surface-sunken px-3 py-2.5 text-sm text-content-primary placeholder:text-content-tertiary focus:border-brand focus:outline-none"
       />
 
