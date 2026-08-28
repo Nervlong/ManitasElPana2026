@@ -173,6 +173,45 @@ export async function updateProfile(
     return { error: "El nombre no puede estar vacío" };
   }
 
+  // Un solo submit para todo: antes la foto vivía en un <form> aparte
+  // ("Cambiar foto") y los datos en otro ("Guardar cambios") — quien
+  // elegía una imagen y clickeaba "Guardar cambios" nunca la subía, sin
+  // ningún aviso de que hacía falta el otro botón. Ahora es un único
+  // formulario: si vino un archivo, se sube acá mismo antes de guardar
+  // el resto de los campos.
+  const avatarFile = formData.get("avatar") as File | null;
+  let avatarUrl: string | undefined;
+
+  if (avatarFile && avatarFile.size > 0) {
+    // 2MB / mimetypes ya los exige el bucket (0013_avatar_storage.sql),
+    // pero se re-valida acá para dar un mensaje claro antes de subir.
+    if (avatarFile.size > 2 * 1024 * 1024) {
+      return { error: "La imagen no puede pesar más de 2 MB." };
+    }
+
+    const ext = avatarFile.name.split(".").pop() || "jpg";
+    // Mismo nombre siempre (no uno por upload): reemplaza el anterior en
+    // vez de acumular archivos huérfanos en el bucket.
+    const path = `${user!.id}/avatar.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(path, avatarFile, { upsert: true });
+
+    if (uploadError) {
+      return { error: "No pudimos subir la imagen. Inténtalo de nuevo." };
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("avatars").getPublicUrl(path);
+
+    // Cache-bust: el nombre de archivo no cambia entre subidas (mismo
+    // path con upsert), así que sin esto el navegador podría seguir
+    // mostrando la imagen vieja cacheada.
+    avatarUrl = `${publicUrl}?v=${Date.now()}`;
+  }
+
   // specialty/bio/coverageZone/whatsapp solo se guardan si el form los
   // manda — el formulario de cliente no incluye esos campos, así que
   // quedan intactos (no se pisan con vacío) para esa cuenta.
@@ -185,6 +224,7 @@ export async function updateProfile(
   if (formData.has("whatsapp")) {
     updates.whatsapp_number = String(formData.get("whatsapp") ?? "").trim();
   }
+  if (avatarUrl) updates.avatar_url = avatarUrl;
 
   const { error } = await supabase.from("profiles").update(updates).eq("id", user.id);
 
@@ -193,61 +233,6 @@ export async function updateProfile(
   }
 
   redirect("/seguridad?actualizado=1");
-}
-
-export async function updateAvatar(formData: FormData) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  const file = formData.get("avatar") as File | null;
-  if (!file || file.size === 0) {
-    redirect("/seguridad?error=sin_archivo");
-  }
-
-  // 2MB / mimetypes ya los exige el bucket (0013_avatar_storage.sql),
-  // pero se re-valida acá para dar un mensaje claro antes de subir.
-  if (file!.size > 2 * 1024 * 1024) {
-    redirect("/seguridad?error=avatar_muy_grande");
-  }
-
-  const ext = file!.name.split(".").pop() || "jpg";
-  // Mismo nombre siempre (no uno por upload): reemplaza el anterior en
-  // vez de acumular archivos huérfanos en el bucket.
-  const path = `${user!.id}/avatar.${ext}`;
-
-  const { error: uploadError } = await supabase.storage
-    .from("avatars")
-    .upload(path, file!, { upsert: true });
-
-  if (uploadError) {
-    redirect("/seguridad?error=avatar_no_subido");
-  }
-
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from("avatars").getPublicUrl(path);
-
-  // Cache-bust: el nombre de archivo no cambia entre subidas (mismo
-  // path con upsert), así que sin esto el navegador podría seguir
-  // mostrando la imagen vieja cacheada.
-  const avatarUrl = `${publicUrl}?v=${Date.now()}`;
-
-  const { error: updateError } = await supabase
-    .from("profiles")
-    .update({ avatar_url: avatarUrl })
-    .eq("id", user!.id);
-
-  if (updateError) {
-    redirect("/seguridad?error=avatar_no_guardado");
-  }
-
-  redirect("/seguridad?avatar_actualizado=1");
 }
 
 export async function changePassword(

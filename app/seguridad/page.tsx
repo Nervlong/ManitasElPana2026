@@ -5,7 +5,7 @@
 // activo como manita). Antes vivía embebido dentro de /cuenta como
 // sección con scroll — ahora es su propia página, como /direcciones,
 // /historial y /notificaciones.
-// Server Component + Server Actions (updateProfile, updateAvatar,
+// Server Component + Server Actions (updateProfile —incluye la foto—,
 // changePassword en app/auth/actions.ts).
 // -----------------------------------------------------------------------------
 
@@ -22,26 +22,11 @@ interface SeguridadPageProps {
   searchParams: Promise<{
     actualizado?: string;
     password_actualizada?: string;
-    avatar_actualizado?: string;
-    error?: string;
   }>;
 }
 
-const seguridadErrors: Record<string, string> = {
-  sin_archivo: "Elige una imagen antes de subir.",
-  avatar_muy_grande: "La imagen no puede pesar más de 2 MB.",
-  avatar_no_subido: "No pudimos subir la imagen. Prueba de nuevo.",
-  avatar_no_guardado: "La imagen se subió pero no pudimos guardarla en tu perfil.",
-};
-
 export default async function SeguridadPage({ searchParams }: SeguridadPageProps) {
-  const {
-    actualizado,
-    password_actualizada: passwordActualizada,
-    avatar_actualizado: avatarActualizado,
-    error,
-  } = await searchParams;
-  const seguridadError = error ? seguridadErrors[error] : undefined;
+  const { actualizado, password_actualizada: passwordActualizada } = await searchParams;
 
   const supabase = await createClient();
   const {
@@ -93,19 +78,11 @@ export default async function SeguridadPage({ searchParams }: SeguridadPageProps
           </h1>
         </div>
 
-        {(actualizado || passwordActualizada || avatarActualizado) && (
+        {(actualizado || passwordActualizada) && (
           <div className="rounded-xl border border-status-success/20 bg-status-success/10 px-4 py-3 text-sm font-medium text-status-success">
             {actualizado
               ? "Perfil actualizado correctamente."
-              : passwordActualizada
-                ? "Contraseña actualizada correctamente."
-                : "Foto de perfil actualizada."}
-          </div>
-        )}
-
-        {seguridadError && (
-          <div className="rounded-xl border border-status-danger/20 bg-status-danger/10 px-4 py-3 text-sm font-medium text-status-danger">
-            {seguridadError}
+              : "Contraseña actualizada correctamente."}
           </div>
         )}
 

@@ -3,14 +3,19 @@
 // -----------------------------------------------------------------------------
 // ProfileForm — edición de datos del perfil: foto, nombre, y si aplica
 // (manita o admin, que también puede trabajar como manita desde /panel),
-// specialty/bio/coverage_zone. Client Component: useFormState/useFormStatus
-// (React 18 + react-dom) para conectar con la Server Action.
+// specialty/bio/coverage_zone/whatsapp. Un solo <form>/submit para todo,
+// incluida la foto (AvatarPicker solo maneja el preview, no tiene su
+// propio action) — antes eran 2 formularios separados y quien elegía
+// una imagen pero clickeaba "Guardar cambios" (en vez del botón
+// "Cambiar foto" aparte) nunca la subía.
+// Client Component: useFormState/useFormStatus (React 18 + react-dom)
+// para conectar con la Server Action.
 // -----------------------------------------------------------------------------
 
 import { useFormState, useFormStatus } from "react-dom";
 import { Loader2 } from "lucide-react";
 import { updateProfile, type AuthFormState } from "@/app/auth/actions";
-import { AvatarUploadForm } from "@/components/auth/avatar-upload-form";
+import { AvatarPicker } from "@/components/auth/avatar-picker";
 import { specialties } from "@/lib/catalog";
 
 const initialState: AuthFormState = {};
@@ -59,15 +64,15 @@ export function ProfileForm({
   const initial = (fullName || "U").charAt(0).toUpperCase();
 
   return (
-    <div className="flex flex-col gap-6">
+    <form action={formAction} className="flex flex-col gap-6">
       <div>
         <p className="mb-2 text-xs font-medium uppercase tracking-widest text-content-tertiary">
           Foto de perfil
         </p>
-        <AvatarUploadForm currentAvatarUrl={avatarUrl} initial={initial} />
+        <AvatarPicker currentAvatarUrl={avatarUrl} initial={initial} />
       </div>
 
-      <form action={formAction} className="flex flex-col gap-5">
+      <div className="flex flex-col gap-5">
         <div>
           <label
             htmlFor="pf-nombre"
@@ -176,7 +181,7 @@ export function ProfileForm({
         <div>
           <SubmitButton />
         </div>
-      </form>
-    </div>
+      </div>
+    </form>
   );
 }
