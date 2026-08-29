@@ -60,7 +60,7 @@ function AccountCard({ icon, title, description, href, badge, comingSoon }: Acco
     <>
       <span
         className={
-          "flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors" +
+          "flex h-16 w-16 shrink-0 items-center justify-center rounded-full transition-colors [&>svg]:h-7 [&>svg]:w-7" +
           (href
             ? " bg-surface-sunken text-brand group-hover:bg-brand group-hover:text-white"
             : " bg-surface-sunken text-content-tertiary")
@@ -69,29 +69,29 @@ function AccountCard({ icon, title, description, href, badge, comingSoon }: Acco
         {icon}
       </span>
       <div className="min-w-0 flex-1">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-content-primary">
+        <h3 className="flex items-center gap-2 text-lg font-semibold text-content-primary">
           {title}
           {!!badge && (
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-accent-contrast">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-sm font-bold text-accent-contrast">
               {badge}
             </span>
           )}
         </h3>
-        <p className="mt-1 text-xs leading-relaxed text-content-tertiary">{description}</p>
+        <p className="mt-1.5 text-base leading-relaxed text-content-tertiary">{description}</p>
         {comingSoon && (
-          <span className="mt-2 inline-block rounded-md bg-status-warning/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-status-warning">
+          <span className="mt-3 inline-block rounded-md bg-status-warning/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-status-warning">
             Próximamente
           </span>
         )}
       </div>
       {href && (
-        <ArrowRight className="h-4 w-4 shrink-0 -translate-x-1 text-brand opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100" />
+        <ArrowRight className="h-6 w-6 shrink-0 -translate-x-1 text-brand opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100" />
       )}
     </>
   );
 
   const className =
-    "group relative flex items-start gap-4 rounded-xl border border-border-default bg-surface-raised p-5 shadow-elevation-1 transition-all duration-200" +
+    "group relative flex items-start gap-6 rounded-xl border border-border-default bg-surface-raised p-7 shadow-elevation-1 transition-all duration-200" +
     (href ? " hover:border-brand/40 hover:-translate-y-0.5 hover:shadow-elevation-3" : " opacity-70");
 
   if (href) {
@@ -192,24 +192,24 @@ export default async function CuentaPage({ searchParams }: CuentaPageProps) {
         isAdmin={isAdmin}
       />
 
-      <div className="mx-auto max-w-5xl space-y-6 px-6 pb-24">
+      <div className="mx-auto max-w-6xl space-y-9 px-6 pb-24">
         {/* ---- Encabezado simple: nombre, rol, email ---- */}
         <div>
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tight text-brand-dark">Mi cuenta</h1>
-            <span className="rounded-md bg-brand-dark px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white">
+          <div className="flex flex-wrap items-center gap-4">
+            <h1 className="text-4xl font-bold tracking-tight text-brand-dark">Mi cuenta</h1>
+            <span className="rounded-md bg-brand-dark px-4 py-1.5 text-sm font-semibold uppercase tracking-wider text-white">
               {roleLabels[role] ?? role}
             </span>
             {profile?.is_verified && (
-              <span className="inline-flex items-center gap-1 rounded-md bg-status-success/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-status-success">
-                <ShieldCheck className="h-3.5 w-3.5" />
+              <span className="inline-flex items-center gap-1.5 rounded-md bg-status-success/10 px-4 py-1.5 text-sm font-semibold uppercase tracking-wider text-status-success">
+                <ShieldCheck className="h-5 w-5" />
                 Verificado
               </span>
             )}
           </div>
-          <p className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-content-secondary">
-            <span className="flex items-center gap-1.5">
-              <Mail className="h-3.5 w-3.5" />
+          <p className="mt-2.5 flex flex-wrap items-center gap-x-6 gap-y-1.5 text-base text-content-secondary">
+            <span className="flex items-center gap-2">
+              <Mail className="h-5 w-5" />
               {user.email}
             </span>
             {profile?.created_at && <span>Miembro desde {formatDate(profile.created_at)}</span>}
@@ -217,22 +217,22 @@ export default async function CuentaPage({ searchParams }: CuentaPageProps) {
         </div>
 
         {solicitudEnviada && (
-          <div className="flex items-center gap-2 rounded-xl border border-status-success/20 bg-status-success/10 px-4 py-3 text-sm font-medium text-status-success">
-            <CheckCircle2 className="h-4 w-4 shrink-0" />
+          <div className="flex items-center gap-3 rounded-xl border border-status-success/20 bg-status-success/10 px-6 py-4 text-base font-medium text-status-success">
+            <CheckCircle2 className="h-6 w-6 shrink-0" />
             Solicitud enviada. Un admin la va a revisar pronto.
           </div>
         )}
 
         {cuentaError && (
-          <div className="flex items-center gap-2 rounded-xl border border-status-danger/20 bg-status-danger/10 px-4 py-3 text-sm font-medium text-status-danger">
-            <CheckCircle2 className="h-4 w-4 shrink-0" />
+          <div className="flex items-center gap-3 rounded-xl border border-status-danger/20 bg-status-danger/10 px-6 py-4 text-base font-medium text-status-danger">
+            <CheckCircle2 className="h-6 w-6 shrink-0" />
             {cuentaError}
           </div>
         )}
 
         {/* ---- Grid denso de secciones, estilo Amazon: comunes a todos + ---- */}
         {/* específicas de manita o admin según el rol.                    ---- */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <AccountCard
             href="/panel"
             icon={<Briefcase className="h-5 w-5" />}
@@ -312,20 +312,20 @@ export default async function CuentaPage({ searchParams }: CuentaPageProps) {
         {/* ---- Upsell: pasar a manita (según estado real de la solicitud) ---- */}
         {isCliente && (
           <div
-            className="relative flex flex-col items-center gap-6 overflow-hidden rounded-2xl bg-brand-dark p-6 sm:flex-row sm:justify-between sm:p-8"
+            className="relative flex flex-col items-center gap-8 overflow-hidden rounded-2xl bg-brand-dark p-8 sm:flex-row sm:justify-between sm:p-11"
             style={{ boxShadow: "var(--shadow-elevation-3)" }}
           >
             <div className="pointer-events-none absolute -right-1/4 -top-1/2 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
 
-            <div className="relative z-10 flex w-full gap-4 sm:w-auto">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/10">
-                <Hammer className="h-6 w-6 text-accent" />
+            <div className="relative z-10 flex w-full gap-6 sm:w-auto">
+              <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/10">
+                <Hammer className="h-8 w-8 text-accent" />
               </span>
               <div>
-                <h3 className="text-base font-semibold text-white">
+                <h3 className="text-xl font-semibold text-white">
                   ¿Quieres ofrecer tus servicios?
                 </h3>
-                <p className="mt-1 max-w-sm text-sm text-white/70">
+                <p className="mt-1.5 max-w-sm text-base text-white/70">
                   {manitaRequestStatus === "pending"
                     ? "Tu solicitud está pendiente de revisión por un admin."
                     : manitaRequestStatus === "rejected"
@@ -336,7 +336,7 @@ export default async function CuentaPage({ searchParams }: CuentaPageProps) {
             </div>
 
             {manitaRequestStatus === "pending" ? (
-              <span className="relative z-10 whitespace-nowrap rounded-xl border border-white/20 bg-white/10 px-6 py-3 text-sm font-semibold text-white/80">
+              <span className="relative z-10 whitespace-nowrap rounded-xl border border-white/20 bg-white/10 px-8 py-4 text-base font-semibold text-white/80">
                 Pendiente de revisión
               </span>
             ) : (
@@ -348,7 +348,7 @@ export default async function CuentaPage({ searchParams }: CuentaPageProps) {
         <form action={signOut}>
           <button
             type="submit"
-            className="rounded-md border border-border-default bg-surface-raised px-4 py-2 text-sm font-medium text-content-primary transition-colors hover:bg-surface-overlay"
+            className="rounded-md border border-border-default bg-surface-raised px-6 py-3 text-base font-medium text-content-primary transition-colors hover:bg-surface-overlay"
           >
             Cerrar sesión
           </button>
